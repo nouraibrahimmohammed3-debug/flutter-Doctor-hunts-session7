@@ -1,0 +1,88 @@
+{
+
+  "appName": "Doctor Hunt",
+
+  "onboardingTitleOne": "Find Trusted Doctors",
+  "onboardingDescriptionOne": "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of it over 2000 years old.",
+  "onboardingTitleTwo": "Choose Best Doctors",
+  "onboardingDescriptionTwo": "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of it over 2000 years old.",
+  "onboardingTitleThree": "Easy Appointments",
+  "onboardingDescriptionThree": "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of it over 2000 years old.",
+
+  "next": "Next",
+  "skip": "Skip",
+  "getStarted": "Get Started",
+
+  "chooseRoleTitle": "Choose your role",
+  "chooseRoleDescription": "Select how you want to continue",
+  "patient": "Patient",
+  "patientDescription": "Find doctors and book appointments",
+  "admin": "Admin",
+  "adminDescription": "Continue",
+  "continueText": "Continue",
+
+  "homeGreeting": "Hi Mohammed!",
+  "findYourDoctor": "Find Your Doctor",
+  "searchDoctor": "Search...",
+  "liveDoctors": "Live Doctors",
+  "seeAll": "See all",
+  "popularDoctors": "Popular Doctor",
+
+  "categories": "Categories",
+  "featureDoctors": "Feature Doctor",
+  "findDoctors": "Find Doctors",
+  "doctorDetails": "Doctor Details",
+  "dentistSearch": "Dentist",
+  "nextAvailable": "Next Available",
+  "bookNow": "Book Now",
+  "perHour": "/hr",
+  "noDoctorsFound": "No doctors found",
+  "running": "Running",
+  "ongoing": "Ongoing",
+  "patients": "Patients",
+  "services": "Services",
+  "serviceOne": "Patient care should be the number one priority.",
+  "serviceTwo": "We listen carefully and explain every treatment clearly.",
+  "serviceThree": "Modern care supported by experienced medical staff.",
+  "location": "Location",
+
+  "dental": "Dental",
+  "cardiology": "Cardiology",
+  "ophthalmology": "Ophthalmology",
+  "generalMedicine": "General",
+
+  "home": "Home",
+  "favorites": "Favorites",
+  "messages": "Messages",
+  "profile": "Profile",
+
+  "selecttime": "SelectTime",
+  "today": "Today",
+  "noSlotsAvailable": "No slots available",
+  "afternoon": "Afternoon",
+  "evening": "Evening",
+  "slots": "slots",
+  "tomorrow": "Tomorrow",
+  "slotsAvailable": "slots available",
+  "nextAvailabilityOn": "Next availability on",
+  "orText": "OR",
+  "contactClinic": "Contact Clinic",
+  "bookAppointment": "Confirm",
+  "thankYou": "Thank You !",
+  "appointmentSuccessful": "Your Appointment Successful",
+  "done": "Done",
+  "editAppointment": "Edit your appointment",
+
+  "appointmentConfirmation": "You booked an appointment with $doctorName on $date, at $time",
+
+  "noFavoriteDoctors": "noFavoriteDoctors",
+  "email": "Email",
+ "enterEmail": "Enter your email",
+ "password": "Password",
+"enterPassword": "Enter your password",
+"welcome":"Welcome Back",
+"loginAdmin": "Login to your admin account"
+
+  
+
+}

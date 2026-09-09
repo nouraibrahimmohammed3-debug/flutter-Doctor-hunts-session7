@@ -1,0 +1,14 @@
+targets:
+  $default:
+    builders:
+      slang_build_runner:
+        enabled: false
+      slang_build_runner:legacy:
+        enabled: true
+        options:
+          base_locale: en
+          input_directory: lib/i18n
+          input_file_pattern: .i18n.json
+          output_directory: lib/generated
+          output_file_name: strings.g.dart
+          flutter_integration: true
