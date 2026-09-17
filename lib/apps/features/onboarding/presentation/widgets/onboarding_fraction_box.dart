@@ -19,9 +19,7 @@ class OnboardingFractionBox extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(999),
-              ),
+              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(999)),
             ),
           ),
         ),

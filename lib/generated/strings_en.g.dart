@@ -256,6 +256,87 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	/// en: 'Login to your admin account'
 	String get loginAdmin => 'Login to your admin account';
+
+	/// en: 'Login'
+	String get botnlogin => 'Login';
+
+	/// en: 'Doctors'
+	String get doctors => 'Doctors';
+
+	/// en: 'Search doctors'
+	String get searchDoctors => 'Search doctors';
+
+	/// en: 'Total Doctors'
+	String get totalDoctors => 'Total Doctors';
+
+	/// en: 'Active Doctors'
+	String get activeDoctors => 'Active Doctors';
+
+	/// en: 'Active'
+	String get active => 'Active';
+
+	/// en: 'Inactive'
+	String get inactive => 'Inactive';
+
+	/// en: 'Add Doctor'
+	String get addDoctor => 'Add Doctor';
+
+	/// en: 'Create Doctor'
+	String get createDoctor => 'Create Doctor';
+
+	/// en: 'Doctor Name'
+	String get doctorName => 'Doctor Name';
+
+	/// en: 'Enter doctor name'
+	String get enterDoctorName => 'Enter doctor name';
+
+	/// en: 'Doctor Image'
+	String get doctorImage => 'Doctor Image';
+
+	/// en: 'Upload doctor image'
+	String get uploadDoctorImage => 'Upload doctor image';
+
+	/// en: 'PNG or JPG up to 5 MB'
+	String get supportedImageFormats => 'PNG or JPG up to 5 MB';
+
+	/// en: 'Edit Doctor'
+	String get editDoctor => 'Edit Doctor';
+
+	/// en: 'Delete Doctor'
+	String get deleteDoctor => 'Delete Doctor';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Doctor created successfully'
+	String get doctorCreatedSuccessfully => 'Doctor created successfully';
+
+	/// en: 'Doctor updated successfully'
+	String get doctorUpdatedSuccessfully => 'Doctor updated successfully';
+
+	/// en: 'Doctor deleted successfully'
+	String get doctorDeletedSuccessfully => 'Doctor deleted successfully';
+
+	/// en: 'Failed to create doctor'
+	String get failedToCreateDoctor => 'Failed to create doctor';
+
+	/// en: 'No doctors available'
+	String get noDoctorsAvailable => 'No doctors available';
+
+	/// en: 'Specialization'
+	String get specialization => 'Specialization';
+
+	/// en: 'Select specialization'
+	String get selectSpecialization => 'Select specialization';
+
+	/// en: 'Doctor name is required'
+	String get doctorNameRequired => 'Doctor name is required';
+
+	/// en: 'Specialization is required'
+	String get specializationRequired => 'Specialization is required';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -338,6 +419,33 @@ extension on Translations {
 			'enterPassword' => 'Enter your password',
 			'welcome' => 'Welcome Back',
 			'loginAdmin' => 'Login to your admin account',
+			'botnlogin' => 'Login',
+			'doctors' => 'Doctors',
+			'searchDoctors' => 'Search doctors',
+			'totalDoctors' => 'Total Doctors',
+			'activeDoctors' => 'Active Doctors',
+			'active' => 'Active',
+			'inactive' => 'Inactive',
+			'addDoctor' => 'Add Doctor',
+			'createDoctor' => 'Create Doctor',
+			'doctorName' => 'Doctor Name',
+			'enterDoctorName' => 'Enter doctor name',
+			'doctorImage' => 'Doctor Image',
+			'uploadDoctorImage' => 'Upload doctor image',
+			'supportedImageFormats' => 'PNG or JPG up to 5 MB',
+			'editDoctor' => 'Edit Doctor',
+			'deleteDoctor' => 'Delete Doctor',
+			'cancel' => 'Cancel',
+			'save' => 'Save',
+			'doctorCreatedSuccessfully' => 'Doctor created successfully',
+			'doctorUpdatedSuccessfully' => 'Doctor updated successfully',
+			'doctorDeletedSuccessfully' => 'Doctor deleted successfully',
+			'failedToCreateDoctor' => 'Failed to create doctor',
+			'noDoctorsAvailable' => 'No doctors available',
+			'specialization' => 'Specialization',
+			'selectSpecialization' => 'Select specialization',
+			'doctorNameRequired' => 'Doctor name is required',
+			'specializationRequired' => 'Specialization is required',
 			_ => null,
 		};
 	}

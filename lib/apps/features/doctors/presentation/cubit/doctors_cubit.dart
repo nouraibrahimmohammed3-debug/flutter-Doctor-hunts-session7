@@ -5,12 +5,12 @@ import 'doctors_state.dart';
 
 class DoctorsCubit extends Cubit<DoctorsState> {
   DoctorsCubit(List<DoctorModel> doctors)
-      : super(
-          DoctorsState(
-            doctors: List.unmodifiable(doctors),
-            filteredDoctors: List.unmodifiable(doctors),
-          ),
-        );
+    : super(
+        DoctorsState(
+          doctors: List.unmodifiable(doctors),
+          filteredDoctors: List.unmodifiable(doctors),
+        ),
+      );
 
   void search(String value) {
     final query = value.trim().toLowerCase();

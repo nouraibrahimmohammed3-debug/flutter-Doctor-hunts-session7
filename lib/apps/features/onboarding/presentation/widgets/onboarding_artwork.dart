@@ -16,10 +16,7 @@ class OnboardingArtwork extends StatelessWidget {
                 widthFactor: 0.79,
                 heightFactor: 0.79,
                 child: ClipOval(
-                  child: Image.asset(
-                    imagePath,
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.asset(imagePath, fit: BoxFit.cover),
                 ),
               ),
             ),

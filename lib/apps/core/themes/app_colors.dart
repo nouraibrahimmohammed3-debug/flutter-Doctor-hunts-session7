@@ -30,6 +30,7 @@ abstract final class AppColors {
   // Basic
   static const white = Color(0xFFFFFFFF);
   static const black = Color(0xFF000000);
+  static const alabaster = Color.fromARGB(255, 250, 250, 248);
 
   // Effects
   static const boxShadow = Color(0x1A000000);

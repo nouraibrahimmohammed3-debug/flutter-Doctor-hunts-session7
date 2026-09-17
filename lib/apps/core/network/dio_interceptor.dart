@@ -152,5 +152,5 @@
 //   Future<void> _handleLogout() async {
 //     log("Logging out user due to unauthorized access", name: 'DioInterceptor');
 //     UnAuthorizedService.event.fire(401);
-//   } 
+//   }
 // }

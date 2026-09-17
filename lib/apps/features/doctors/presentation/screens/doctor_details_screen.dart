@@ -1,4 +1,5 @@
 import 'package:doctor_hunt/apps/core/router/app_router.dart';
+import 'package:doctor_hunt/apps/core/widgets/doctor_hunt_app_bar.dart';
 import 'package:doctor_hunt/generated/strings.g.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -16,10 +17,7 @@ class DoctorDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.doctorDetails, style: context.semiBold16TextMain),
-        actions: const [Icon(Icons.search)],
-      ),
+      appBar: DoctorHuntAppBar(title: 'Creat Doctor'),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),

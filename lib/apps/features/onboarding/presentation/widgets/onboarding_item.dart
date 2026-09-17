@@ -7,25 +7,19 @@ import '../../data/models/onboarding_model.dart';
 
 class OnboardingItem extends StatelessWidget {
   final OnboardingModel item;
-  OnboardingItem({super.key, required this.item});
+  const OnboardingItem({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Positioned.fill(
-          child: OnboardingFractionBox(
-            alignment: Alignment.topRight,
-          ),
+          child: OnboardingFractionBox(alignment: Alignment.topRight),
         ),
         Positioned.fill(
           child: Column(
             children: [
-              Expanded(
-                child: OnboardingArtwork(
-                  imagePath: item.imagePath,
-                ),
-              ),
+              Expanded(child: OnboardingArtwork(imagePath: item.imagePath)),
               Gap(3),
               Text(
                 item.title,
@@ -39,7 +33,7 @@ class OnboardingItem extends StatelessWidget {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }

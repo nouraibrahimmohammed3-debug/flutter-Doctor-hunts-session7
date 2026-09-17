@@ -81,8 +81,33 @@
  "password": "Password",
 "enterPassword": "Enter your password",
 "welcome":"Welcome Back",
-"loginAdmin": "Login to your admin account"
-
-  
+"loginAdmin": "Login to your admin account",
+"botnlogin":"Login",
+"doctors": "Doctors",
+"searchDoctors": "Search doctors",
+"totalDoctors": "Total Doctors",
+"activeDoctors": "Active Doctors",
+"active": "Active",
+"inactive": "Inactive",
+"addDoctor": "Add Doctor",
+"createDoctor": "Create Doctor",
+"doctorName": "Doctor Name",
+"enterDoctorName": "Enter doctor name",
+"doctorImage": "Doctor Image",
+"uploadDoctorImage": "Upload doctor image",
+"supportedImageFormats": "PNG or JPG up to 5 MB",
+"editDoctor": "Edit Doctor",
+"deleteDoctor": "Delete Doctor",
+"cancel": "Cancel",
+"save": "Save",
+"doctorCreatedSuccessfully": "Doctor created successfully",
+"doctorUpdatedSuccessfully": "Doctor updated successfully",
+"doctorDeletedSuccessfully": "Doctor deleted successfully",
+"failedToCreateDoctor": "Failed to create doctor",
+"noDoctorsAvailable": "No doctors available",
+"specialization": "Specialization",
+"selectSpecialization": "Select specialization",
+"doctorNameRequired": "Doctor name is required",
+"specializationRequired": "Specialization is required"
 
 }

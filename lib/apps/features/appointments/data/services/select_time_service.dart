@@ -16,12 +16,11 @@ abstract final class SelectTimeService {
     TimeSlotModel(hour: 18, minute: 30),
     TimeSlotModel(hour: 19, minute: 0),
   ];
-  static List<TimeSlotModel> slotsForDate(
-    DateTime date,
-  ) {
+  static List<TimeSlotModel> slotsForDate(DateTime date) {
     final DateTime today = DateTime.now();
 
-    final bool isToday = date.year == today.year &&
+    final bool isToday =
+        date.year == today.year &&
         date.month == today.month &&
         date.day == today.day;
 

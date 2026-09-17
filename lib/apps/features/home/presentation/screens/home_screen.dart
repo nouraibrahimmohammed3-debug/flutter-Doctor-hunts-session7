@@ -78,7 +78,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({required this.onSearchTap});
+  const HomeHeader({super.key, required this.onSearchTap});
 
   final VoidCallback onSearchTap;
 
@@ -228,6 +228,7 @@ class CategoriesSection extends StatelessWidget {
 
 class DoctorsSection extends StatelessWidget {
   const DoctorsSection({
+    super.key,
     required this.title,
     required this.doctors,
     required this.onSeeAll,
@@ -281,6 +282,7 @@ class DoctorsSection extends StatelessWidget {
 
 class HomeDoctorCard extends StatelessWidget {
   const HomeDoctorCard({
+    super.key,
     required this.doctor,
     required this.large,
     required this.onTap,

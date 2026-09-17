@@ -3,11 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChooseRoleCubit extends Cubit<ChooseRoleState> {
   ChooseRoleCubit()
-      : super(
-          const ChooseRoleState(
-            selectedRole: UserRole.patient,
-          ),
-        );
+    : super(const ChooseRoleState(selectedRole: UserRole.patient));
 
   void selectRole(UserRole role) {
     if (role == state.selectedRole) return;

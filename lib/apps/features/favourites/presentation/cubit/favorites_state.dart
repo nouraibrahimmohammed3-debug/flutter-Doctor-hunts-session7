@@ -1,8 +1,5 @@
 class FavoritesState {
-  const FavoritesState({
-    required this.favoriteDoctorIds,
-    this.searchText = '',
-  });
+  const FavoritesState({required this.favoriteDoctorIds, this.searchText = ''});
 
   final Set<String> favoriteDoctorIds;
   final String searchText;

@@ -96,7 +96,7 @@ class _ChooseRoleView extends StatelessWidget {
                       return;
 
                     case UserRole.admin:
-                      context.push(AppRouter.admin_login);
+                      context.push(AppRouter.adminLogin);
 
                       return;
                   }

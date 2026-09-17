@@ -1,6 +1,8 @@
+import 'package:doctor_hunt/apps/features/admin/presentation/cubit/creat_doctor/create_doctor_cubit.dart';
 import 'package:doctor_hunt/apps/features/appointments/presentation/screens/select_time_screen.dart';
 import 'package:doctor_hunt/apps/features/auth/presentation/screens/admin_login_screen.dart';
 import 'package:doctor_hunt/apps/features/choose_role/presentation/screens/choose_role_screen.dart';
+import 'package:doctor_hunt/apps/features/doctors/data/services/doctors_firestore_service.dart';
 import 'package:doctor_hunt/apps/features/doctors/data/services/doctors_service.dart';
 import 'package:doctor_hunt/apps/features/doctors/presentation/screens/doctor_details_screen.dart';
 import 'package:doctor_hunt/apps/features/doctors/presentation/screens/find_doctors_screen.dart';
@@ -9,6 +11,9 @@ import 'package:doctor_hunt/apps/features/home/presentation/screens/home_screen.
 import 'package:doctor_hunt/apps/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:doctor_hunt/apps/features/splash/presentation/screens/splash_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:doctor_hunt/apps/features/admin/presentation/screen/admin_doctor.dart';
+import 'package:doctor_hunt/apps/features/admin/presentation/screen/creat_doctor_admin.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 abstract final class AppRouter {
   static const String splash = '/';
@@ -18,7 +23,9 @@ abstract final class AppRouter {
   static const String findDoctors = '/find-doctors';
   static const String doctorDetails = '/doctor/:doctorId';
   static const String favorites = '/favorites';
-  static const String admin_login = '/admin_login';
+  static const String adminLogin = '/admin_login';
+  static const String adminDoctor = '/admin_doctor';
+  static const String createDoctor = '/admin/create-doctor';
 
   static String doctorDetailsPath(String doctorId) => '/doctor/$doctorId';
   static const String selectTime = '/doctor/:doctorId/select-time';
@@ -66,8 +73,22 @@ abstract final class AppRouter {
         builder: (_, __) => const FavoriteDoctorsScreen(),
       ),
       GoRoute(
-        path: admin_login,
+        path: adminLogin,
         builder: (context, state) => const AdminLoginScreen(),
+      ),
+      GoRoute(
+        path: adminDoctor,
+        builder: (context, state) => const AdminDoctorsScreen(),
+      ),
+      GoRoute(
+        path: createDoctor,
+        builder: (context, state) {
+          return BlocProvider(
+            create: (_) =>
+                CreateDoctorCubit(doctorsService: DoctorsFirestoreService()),
+            child: const CreateDoctorScreen(),
+          );
+        },
       ),
     ],
   );

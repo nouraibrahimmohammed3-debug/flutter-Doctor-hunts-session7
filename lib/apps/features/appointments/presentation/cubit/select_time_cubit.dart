@@ -6,14 +6,12 @@ import 'select_time_state.dart';
 
 class SelectTimeCubit extends Cubit<SelectTimeState> {
   SelectTimeCubit()
-      : super(
-          SelectTimeState(
-            selectedDate: DateTime.now(),
-            availableSlots: SelectTimeService.slotsForDate(
-              DateTime.now(),
-            ),
-          ),
-        );
+    : super(
+        SelectTimeState(
+          selectedDate: DateTime.now(),
+          availableSlots: SelectTimeService.slotsForDate(DateTime.now()),
+        ),
+      );
 
   void selectDate(DateTime date) {
     emit(

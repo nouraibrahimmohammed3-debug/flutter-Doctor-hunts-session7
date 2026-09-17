@@ -25,7 +25,7 @@ class FindDoctorsScreen extends StatelessWidget {
 }
 
 class FindDoctorsView extends StatelessWidget {
-  const FindDoctorsView();
+  const FindDoctorsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +97,7 @@ class FindDoctorsView extends StatelessWidget {
 
 class DoctorListCard extends StatelessWidget {
   const DoctorListCard({
+    super.key,
     required this.doctor,
     required this.isFavorite,
     required this.onFavoriteTap,

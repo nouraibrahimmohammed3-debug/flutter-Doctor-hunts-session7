@@ -5,10 +5,7 @@ import 'package:doctor_hunt/generated/style_atoms.dart';
 import 'package:flutter/material.dart';
 
 class SelectTimeDoctorCard extends StatelessWidget {
-  const SelectTimeDoctorCard({
-    required this.doctor,
-    super.key,
-  });
+  const SelectTimeDoctorCard({required this.doctor, super.key});
 
   final DoctorModel doctor;
 
@@ -20,10 +17,7 @@ class SelectTimeDoctorCard extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
-          BoxShadow(
-            color: AppColors.boxShadow,
-            blurRadius: 10,
-          ),
+          BoxShadow(color: AppColors.boxShadow, blurRadius: 10),
         ],
       ),
       child: Row(
@@ -33,9 +27,7 @@ class SelectTimeDoctorCard extends StatelessWidget {
             child: SizedBox(
               width: 64,
               height: 64,
-              child: DoctorImage(
-                imagePath: doctor.imagePath,
-              ),
+              child: DoctorImage(imagePath: doctor.imagePath),
             ),
           ),
           const SizedBox(width: 12),
@@ -43,38 +35,25 @@ class SelectTimeDoctorCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  doctor.name,
-                  style: context.semiBold16TextMain,
-                ),
+                Text(doctor.name, style: context.semiBold16TextMain),
                 const SizedBox(height: 3),
-                Text(
-                  doctor.specialization,
-                  style: context.regular11TextSub,
-                ),
+                Text(doctor.specialization, style: context.regular11TextSub),
                 const SizedBox(height: 6),
                 Row(
-                  children: List.generate(
-                    5,
-                    (index) {
-                      final bool isFilled = index < doctor.rating.round();
+                  children: List.generate(5, (index) {
+                    final bool isFilled = index < doctor.rating.round();
 
-                      return Icon(
-                        isFilled ? Icons.star : Icons.star_border,
-                        size: 14,
-                        color: AppColors.warning,
-                      );
-                    },
-                  ),
+                    return Icon(
+                      isFilled ? Icons.star : Icons.star_border,
+                      size: 14,
+                      color: AppColors.warning,
+                    );
+                  }),
                 ),
               ],
             ),
           ),
-          const Icon(
-            Icons.favorite,
-            color: AppColors.danger,
-            size: 21,
-          ),
+          const Icon(Icons.favorite, color: AppColors.danger, size: 21),
         ],
       ),
     );

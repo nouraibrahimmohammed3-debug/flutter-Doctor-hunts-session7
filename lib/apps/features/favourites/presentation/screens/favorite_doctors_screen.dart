@@ -163,6 +163,7 @@ class FavoriteDoctorsScreen extends StatelessWidget {
 
 class FavoriteDoctorCard extends StatelessWidget {
   const FavoriteDoctorCard({
+    super.key,
     required this.doctor,
     required this.onTap,
     required this.onFavoriteTap,

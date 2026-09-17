@@ -6,18 +6,31 @@
 // -----------------------------------------------------------------------------
 
 class AppAssets {
-  static const String imagesCategoriesDentalPng = 'assets/images/categories/dental.png';
-  static const String imagesCategoriesOphthalmologyPng = 'assets/images/categories/ophthalmology.png';
-  static const String imagesDoctorsDoctorBlessingPng = 'assets/images/doctors/doctor_blessing.png';
-  static const String imagesDoctorsDoctorCrownowerJpg = 'assets/images/doctors/doctor_crownower.jpg';
-  static const String imagesDoctorsDoctorFillerupPng = 'assets/images/doctors/doctor_fillerup.png';
-  static const String imagesDoctorsDoctorShrutiJpg = 'assets/images/doctors/doctor_shruti.jpg';
-  static const String imagesDoctorsDoctorWatamanukJpg = 'assets/images/doctors/doctor_watamanuk.jpg';
-  static const String imagesDoctorsLiveDoctor1Png = 'assets/images/doctors/live_doctor_1.png';
-  static const String imagesDoctorsLiveDoctor2Png = 'assets/images/doctors/live_doctor_2.png';
-  static const String imagesDoctorsLiveDoctor3Png = 'assets/images/doctors/live_doctor_3.png';
+  static const String imagesCategoriesDentalPng =
+      'assets/images/categories/dental.png';
+  static const String imagesCategoriesOphthalmologyPng =
+      'assets/images/categories/ophthalmology.png';
+  static const String imagesDoctorsDoctorBlessingPng =
+      'assets/images/doctors/doctor_blessing.png';
+  static const String imagesDoctorsDoctorCrownowerJpg =
+      'assets/images/doctors/doctor_crownower.jpg';
+  static const String imagesDoctorsDoctorFillerupPng =
+      'assets/images/doctors/doctor_fillerup.png';
+  static const String imagesDoctorsDoctorShrutiJpg =
+      'assets/images/doctors/doctor_shruti.jpg';
+  static const String imagesDoctorsDoctorWatamanukJpg =
+      'assets/images/doctors/doctor_watamanuk.jpg';
+  static const String imagesDoctorsLiveDoctor1Png =
+      'assets/images/doctors/live_doctor_1.png';
+  static const String imagesDoctorsLiveDoctor2Png =
+      'assets/images/doctors/live_doctor_2.png';
+  static const String imagesDoctorsLiveDoctor3Png =
+      'assets/images/doctors/live_doctor_3.png';
   static const String imagesLogoPng = 'assets/images/logo.png';
-  static const String imagesOnboardingBestDoctorsJpg = 'assets/images/onboarding_best_doctors.jpg';
-  static const String imagesOnboardingEasyAppointmentsJpg = 'assets/images/onboarding_easy_appointments.jpg';
-  static const String imagesOnboardingTrustedDoctorsJpg = 'assets/images/onboarding_trusted_doctors.jpg';
+  static const String imagesOnboardingBestDoctorsJpg =
+      'assets/images/onboarding_best_doctors.jpg';
+  static const String imagesOnboardingEasyAppointmentsJpg =
+      'assets/images/onboarding_easy_appointments.jpg';
+  static const String imagesOnboardingTrustedDoctorsJpg =
+      'assets/images/onboarding_trusted_doctors.jpg';
 }
