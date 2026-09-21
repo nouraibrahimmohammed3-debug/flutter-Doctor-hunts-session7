@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isActiveUser() {
+      return isSignedIn() && currentUserData().isActive == true;
+    }
+
+    function hasRole(role) {
+      return isActiveUser() && role in currentUserData().roles;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow create: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.roles == ['patient']
+        && request.resource.data.isActive == true;
+      allow update: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.roles == resource.data.roles
+        && request.resource.data.isActive == resource.data.isActive;
+      allow delete: if false;
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if isActiveUser();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+  }
+}

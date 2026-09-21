@@ -1,185 +1,110 @@
-import 'package:doctor_hunt/apps/core/widgets/doctor_hunt_app_bar.dart';
-import 'package:doctor_hunt/apps/core/widgets/primary_button.dart';
-import 'package:doctor_hunt/apps/features/admin/presentation/cubit/creat_doctor/create_doctor_cubit.dart';
-import 'package:doctor_hunt/apps/features/admin/presentation/cubit/creat_doctor/create_doctor_state.dart';
-import 'package:doctor_hunt/generated/strings.g.dart';
-import 'package:doctor_hunt/generated/style_atoms.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
-class CreateDoctorScreen extends StatefulWidget {
-  const CreateDoctorScreen({super.key});
+import 'package:doctor_hunt/apps/core/widgets/doctor_hunt_app_bar.dart';
+import 'package:doctor_hunt/apps/core/widgets/primary_button.dart';
+import 'package:doctor_hunt/apps/features/admin/presentation/bloc/admin_doctors/admin_doctors_bloc.dart';
+import 'package:doctor_hunt/apps/features/admin/presentation/bloc/admin_doctors/admin_doctors_event.dart';
+import 'package:doctor_hunt/apps/features/admin/presentation/bloc/admin_doctors/admin_doctors_state.dart';
+import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_model.dart';
+import 'package:doctor_hunt/apps/features/shared/doctors/presentation/cubit/doctor_form_cubit.dart';
+import 'package:doctor_hunt/apps/features/shared/doctors/presentation/widgets/doctor_form_fields.dart';
+import 'package:doctor_hunt/generated/strings.g.dart';
 
-  @override
-  State<CreateDoctorScreen> createState() => _CreateDoctorScreenState();
-}
+class CreateDoctorScreen extends StatelessWidget {
+  const CreateDoctorScreen({super.key, this.doctor});
 
-class _CreateDoctorScreenState extends State<CreateDoctorScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  String doctorName = '';
-  String? selectedSpecialization;
+  final DoctorModel? doctor;
 
   @override
   Widget build(BuildContext context) {
-    final appStrings = t;
+    final existing = doctor;
 
-    final specializations = [
-      appStrings.dental,
-      appStrings.cardiology,
-      appStrings.ophthalmology,
-      appStrings.generalMedicine,
-    ];
+    return BlocProvider(
+      create: (_) => DoctorFormCubit(
+        initialState: existing == null
+            ? const DoctorFormState()
+            : DoctorFormState(
+                name: existing.name,
+                specialization: existing.specialization,
+              ),
+      ),
+      child: _DoctorFormScreen(doctor: existing),
+    );
+  }
+}
 
-    return BlocListener<CreateDoctorCubit, CreateDoctorState>(
+class _DoctorFormScreen extends StatefulWidget {
+  const _DoctorFormScreen({this.doctor});
+
+  final DoctorModel? doctor;
+
+  @override
+  State<_DoctorFormScreen> createState() => _DoctorFormScreenState();
+}
+
+class _DoctorFormScreenState extends State<_DoctorFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  bool get isEdit => widget.doctor != null;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AdminDoctorsBloc, AdminDoctorsState>(
+      listenWhen: (previous, current) =>
+          previous.action != current.action ||
+          previous.errorMessage != current.errorMessage ||
+          previous.successMessage != current.successMessage,
       listener: (context, state) {
-        if (state.status == CreateDoctorStatus.success) {
+        if (state.successMessage != null && state.action == AdminDoctorAction.none) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(appStrings.doctorCreatedSuccessfully)),
+            SnackBar(content: Text(state.successMessage!)),
           );
-
           context.pop();
         }
-
-        if (state.status == CreateDoctorStatus.failure) {
+        if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                state.errorMessage ?? appStrings.failedToCreateDoctor,
-              ),
-            ),
+            SnackBar(content: Text(state.errorMessage!)),
           );
         }
       },
       child: Scaffold(
         appBar: DoctorHuntAppBar(
-          title: appStrings.createDoctor,
+          title: isEdit ? 'Edit Doctor' : t.createDoctor,
           showBackButton: true,
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
+          child: Padding(
             padding: const EdgeInsets.all(20),
             child: Form(
               key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: ListView(
                 children: [
                   const Gap(12),
-                  TextFormField(
-                    keyboardType: TextInputType.name,
-                    onChanged: (value) {
-                      doctorName = value;
-                    },
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return appStrings.doctorNameRequired;
-                      }
-
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      labelText: appStrings.doctorName,
-                      hintText: appStrings.enterDoctorName,
-                    ),
-                  ),
-                  const Gap(16),
-                  Text(
-                    appStrings.specialization,
-                    style: context.regular14TextSub,
-                  ),
-                  const Gap(8),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedSpecialization,
-                    hint: Text(appStrings.selectSpecialization),
-                    isExpanded: true,
-                    items: specializations
-                        .map(
-                          (specialization) => DropdownMenuItem<String>(
-                            value: specialization,
-                            child: Text(specialization),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedSpecialization = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return appStrings.specializationRequired;
-                      }
-
-                      return null;
-                    },
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+                  const DoctorFormFields(),
                   const Gap(20),
-                  Text(appStrings.doctorImage, style: context.regular14TextSub),
+                  Text(t.doctorImage),
                   const Gap(8),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      // سنربط اختيار الصورة لاحقًا.
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.cloud_upload_outlined),
-                          const Gap(8),
-                          Text(appStrings.uploadDoctorImage),
-                          const Gap(4),
-                          Text(
-                            appStrings.supportedImageFormats,
-                            style: context.regular14TextSub,
-                          ),
-                        ],
+                  Container(
+                    height: 150,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
                       ),
                     ),
+                    child: Center(child: Text(t.uploadDoctorImage)),
                   ),
                   const Gap(32),
-                  BlocBuilder<CreateDoctorCubit, CreateDoctorState>(
+                  BlocBuilder<AdminDoctorsBloc, AdminDoctorsState>(
                     builder: (context, state) {
-                      final bool isLoading =
-                          state.status == CreateDoctorStatus.loading;
-
+                      final loading = state.action == AdminDoctorAction.adding ||
+                          state.action == AdminDoctorAction.updating;
                       return PrimaryButton(
-                        label: appStrings.createDoctor,
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                final bool isValid =
-                                    _formKey.currentState?.validate() ?? false;
-
-                                if (!isValid) {
-                                  return;
-                                }
-
-                                final specialization = selectedSpecialization;
-
-                                if (specialization == null) {
-                                  return;
-                                }
-
-                                context.read<CreateDoctorCubit>().createDoctor(
-                                  name: doctorName,
-                                  specialization: specialization,
-                                  imagePath: '',
-                                );
-                              },
+                        label: isEdit ? 'Edit Doctor' : t.createDoctor,
+                        onPressed: loading ? null : () => _submit(context),
                       );
                     },
                   ),
@@ -190,5 +115,36 @@ class _CreateDoctorScreenState extends State<CreateDoctorScreen> {
         ),
       ),
     );
+  }
+
+  void _submit(BuildContext context) {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final form = context.read<DoctorFormCubit>().state;
+    final specialization = form.specialization;
+    if (specialization == null) return;
+
+    final updated = (widget.doctor ??
+            const DoctorModel(
+              id: '',
+              name: '',
+              specialization: '',
+              imagePath: '',
+              rating: 0,
+              experience: 0,
+              patientStories: 0,
+              price: 0,
+              isAvailable: true,
+            ))
+        .copyWith(
+      name: form.name.trim(),
+      specialization: specialization,
+    );
+
+    if (isEdit) {
+      context.read<AdminDoctorsBloc>().add(AdminDoctorUpdated(updated));
+    } else {
+      context.read<AdminDoctorsBloc>().add(AdminDoctorAdded(updated));
+    }
   }
 }

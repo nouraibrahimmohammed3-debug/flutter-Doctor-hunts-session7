@@ -1,4 +1,5 @@
 import 'package:doctor_hunt/apps/core/themes/app_colors.dart';
+import 'package:doctor_hunt/apps/features/shared/doctors/presentation/widgets/doctor_image.dart';
 import 'package:doctor_hunt/generated/strings.g.dart';
 import 'package:doctor_hunt/generated/style_atoms.dart';
 import 'package:flutter/material.dart';
@@ -12,18 +13,20 @@ class AdminDoctorCard extends StatelessWidget {
     required this.imagePath,
     required this.isAvailable,
     required this.onMorePressed,
+    this.isProcessing = false,
   });
   final String name;
   final String specialization;
   final String imagePath;
   final bool isAvailable;
-  final VoidCallback onMorePressed;
+  final VoidCallback? onMorePressed;
+  final bool isProcessing;
   @override
   Widget build(BuildContext context) {
     var appStrings = t;
     return Row(
       children: [
-        CircleAvatar(radius: 24, backgroundImage: AssetImage(imagePath)),
+        SizedBox(width: 48, height: 48, child: ClipOval(child: DoctorImage(imagePath: imagePath))),
         const Gap(12),
         Expanded(
           child: Column(
@@ -49,7 +52,9 @@ class AdminDoctorCard extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(onPressed: onMorePressed, icon: const Icon(Icons.more_vert)),
+        isProcessing
+            ? const SizedBox(width: 48, height: 48, child: Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))))
+            : IconButton(onPressed: onMorePressed, icon: const Icon(Icons.more_vert)),
       ],
     );
   }

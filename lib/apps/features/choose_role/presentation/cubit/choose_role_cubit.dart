@@ -1,13 +1,13 @@
-import 'package:doctor_hunt/apps/features/choose_role/presentation/cubit/choose_role_state.dart';
+import 'package:doctor_hunt/apps/features/auth/data/models/user_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'choose_role_state.dart';
+
 class ChooseRoleCubit extends Cubit<ChooseRoleState> {
-  ChooseRoleCubit()
-    : super(const ChooseRoleState(selectedRole: UserRole.patient));
+  ChooseRoleCubit() : super(const ChooseRoleState());
 
   void selectRole(UserRole role) {
     if (role == state.selectedRole) return;
-
-    emit(ChooseRoleState(selectedRole: role));
+    emit(state.copyWith(selectedRole: role));
   }
 }
