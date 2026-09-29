@@ -1,16 +1,15 @@
+
 import 'package:doctor_hunt/apps/core/router/app_router.dart';
+import 'package:doctor_hunt/apps/core/themes/app_colors.dart';
 import 'package:doctor_hunt/apps/features/patient/favourites/presentation/cubit/favorites_cubit.dart';
 import 'package:doctor_hunt/apps/features/patient/favourites/presentation/cubit/favorites_state.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_model.dart';
-import 'package:doctor_hunt/apps/features/shared/doctors/data/services/doctors_service.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/presentation/widgets/doctor_image.dart';
 import 'package:doctor_hunt/generated/strings.g.dart';
+import 'package:doctor_hunt/generated/style_atoms.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-import 'package:doctor_hunt/apps/core/themes/app_colors.dart';
-import 'package:doctor_hunt/generated/style_atoms.dart';
 
 class FavoriteDoctorsScreen extends StatelessWidget {
   const FavoriteDoctorsScreen({super.key});
@@ -19,17 +18,18 @@ class FavoriteDoctorsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.favorites, style: context.semiBold16TextMain),
+        title: Text(
+          t.favorites,
+          style: context.semiBold16TextMain,
+        ),
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
               TextField(
-                onChanged: (value) {
-                  context.read<FavoritesCubit>().search(value);
-                },
+                onChanged: context.read<FavoritesCubit>().search,
                 decoration: InputDecoration(
                   hintText: t.searchDoctor,
                   prefixIcon: const Icon(
@@ -56,23 +56,25 @@ class FavoriteDoctorsScreen extends StatelessWidget {
               Expanded(
                 child: BlocBuilder<FavoritesCubit, FavoritesState>(
                   builder: (context, state) {
-                    final List<DoctorModel> doctors = DoctorsService.doctors
-                        .where((doctor) {
-                          final bool isFavorite = state.favoriteDoctorIds
-                              .contains(doctor.id);
+                    if (state.status == FavoritesStatus.initial ||
+                        state.status == FavoritesStatus.loading) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
 
-                          final String query = state.searchText;
+                    if (state.status == FavoritesStatus.failure) {
+                      return Center(
+                        child: Text(
+                          state.errorMessage ??
+                              'Failed to load doctors.',
+                          style: context.regular14TextSub,
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
 
-                          final bool matchesSearch =
-                              query.isEmpty ||
-                              doctor.name.toLowerCase().contains(query) ||
-                              doctor.specialization.toLowerCase().contains(
-                                query,
-                              );
-
-                          return isFavorite && matchesSearch;
-                        })
-                        .toList();
+                    final doctors = state.filteredDoctors;
 
                     if (doctors.isEmpty) {
                       return Center(
@@ -87,25 +89,30 @@ class FavoriteDoctorsScreen extends StatelessWidget {
                       itemCount: doctors.length,
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.82,
-                          ),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.82,
+                      ),
                       itemBuilder: (context, index) {
-                        final DoctorModel doctor = doctors[index];
+                        final doctor = doctors[index];
 
                         return FavoriteDoctorCard(
                           doctor: doctor,
                           onTap: () {
                             context.push(
-                              AppRouter.doctorDetailsPath(doctor.id),
+                              AppRouter.doctorDetailsPath(
+                                doctor.id,
+                              ),
+                              extra: doctor,
                             );
                           },
                           onFavoriteTap: () {
-                            context.read<FavoritesCubit>().toggleFavorite(
-                              doctor.id,
-                            );
+                            context
+                                .read<FavoritesCubit>()
+                                .toggleFavorite(
+                                  doctor.id,
+                                );
                           },
                         );
                       },
@@ -123,14 +130,11 @@ class FavoriteDoctorsScreen extends StatelessWidget {
           switch (index) {
             case 0:
               context.go(AppRouter.home);
-
             case 1:
               return;
-
             case 2:
               return;
-
-            case 3:
+            case 3:context.push(AppRouter.profile);
               return;
           }
         },
@@ -186,7 +190,10 @@ class FavoriteDoctorCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             boxShadow: const [
-              BoxShadow(color: AppColors.boxShadow, blurRadius: 10),
+              BoxShadow(
+                color: AppColors.boxShadow,
+                blurRadius: 10,
+              ),
             ],
           ),
           child: Stack(
@@ -198,7 +205,9 @@ class FavoriteDoctorCard extends StatelessWidget {
                     child: SizedBox(
                       width: 82,
                       height: 82,
-                      child: DoctorImage(imagePath: doctor.imagePath),
+                      child: DoctorImage(
+                        imagePath: doctor.imagePath,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -242,7 +251,10 @@ class FavoriteDoctorCard extends StatelessWidget {
                 right: 0,
                 child: IconButton(
                   onPressed: onFavoriteTap,
-                  icon: const Icon(Icons.favorite, color: AppColors.danger),
+                  icon: const Icon(
+                    Icons.favorite,
+                    color: AppColors.danger,
+                  ),
                 ),
               ),
             ],
@@ -252,3 +264,4 @@ class FavoriteDoctorCard extends StatelessWidget {
     );
   }
 }
+

@@ -67,8 +67,9 @@ class HomeScreen extends StatelessWidget {
           bottomNavigationBar: NavigationBar(
             selectedIndex: 0,
             onDestinationSelected: (index) {
-              if (index == 0) context.go(AppRouter.home);
-              if (index == 1) context.go(AppRouter.favorites);
+              if (index == 0) context.push(AppRouter.home);
+              if (index == 1) context.push(AppRouter.favorites);
+              if (index==3)context.go(AppRouter.profile);
             },
             destinations: [
               NavigationDestination(icon: const Icon(Icons.home), label: t.home),
