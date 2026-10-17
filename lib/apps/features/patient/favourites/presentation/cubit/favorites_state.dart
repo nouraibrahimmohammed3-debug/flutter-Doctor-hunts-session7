@@ -1,13 +1,6 @@
-
 import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_model.dart';
 
-enum FavoritesStatus {
-  initial,
-  loading,
-  success,
-  empty,
-  failure,
-}
+enum FavoritesStatus { initial, loading, success, empty, failure }
 
 class FavoritesState {
   const FavoritesState({
@@ -16,6 +9,7 @@ class FavoritesState {
     this.favoriteDoctorIds = const {},
     this.searchText = '',
     this.errorMessage,
+    this.pendingDoctorIds = const {},
   });
 
   final FavoritesStatus status;
@@ -23,6 +17,7 @@ class FavoritesState {
   final Set<String> favoriteDoctorIds;
   final String searchText;
   final String? errorMessage;
+  final Set<String> pendingDoctorIds;
 
   List<DoctorModel> get filteredDoctors {
     final query = searchText.trim().toLowerCase();
@@ -39,7 +34,8 @@ class FavoritesState {
       }
 
       return doctor.name.toLowerCase().contains(query) ||
-          doctor.specialization.toLowerCase().contains(query);
+          doctor.specialization.toLowerCase().contains(query) ||
+          doctor.specialtyLabel.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -49,15 +45,15 @@ class FavoritesState {
     Set<String>? favoriteDoctorIds,
     String? searchText,
     String? errorMessage,
+    Set<String>? pendingDoctorIds,
   }) {
     return FavoritesState(
       status: status ?? this.status,
       doctors: doctors ?? this.doctors,
-      favoriteDoctorIds:
-          favoriteDoctorIds ?? this.favoriteDoctorIds,
+      favoriteDoctorIds: favoriteDoctorIds ?? this.favoriteDoctorIds,
       searchText: searchText ?? this.searchText,
       errorMessage: errorMessage,
+      pendingDoctorIds: pendingDoctorIds ?? this.pendingDoctorIds,
     );
   }
 }
-

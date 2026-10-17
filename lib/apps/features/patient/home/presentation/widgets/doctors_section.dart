@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:doctor_hunt/apps/features/patient/favourites/presentation/cubit/favorites_cubit.dart';
 import 'package:doctor_hunt/apps/core/themes/app_colors.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_model.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/presentation/widgets/doctor_image.dart';
@@ -23,8 +25,9 @@ class DoctorsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var appStrings = context.t;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.4),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(
         children: [
           Row(
@@ -32,13 +35,13 @@ class DoctorsSection extends StatelessWidget {
               Expanded(child: Text(title, style: context.semiBold16TextMain)),
               TextButton(
                 onPressed: onSeeAll,
-                child: Text(t.seeAll, style: context.regular11TextSub),
+                child: Text(appStrings.seeAll, style: context.regular11TextSub),
               ),
             ],
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: largeCards ? 205 : 150,
+            height: largeCards ? 270 : 132,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: doctors.length,
@@ -73,53 +76,122 @@ class HomeDoctorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var appStrings = context.t;
+    final favorite = context.select(
+      (FavoritesCubit bloc) => bloc.state.favoriteDoctorIds.contains(doctor.id),
+    );
+    final pending = context.select(
+      (FavoritesCubit bloc) => bloc.state.pendingDoctorIds.contains(doctor.id),
+    );
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        width: large ? 158 : 105,
-        padding: const EdgeInsets.all(7),
+        width: large ? 180 : 100,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(
               color: AppColors.boxShadow,
-              blurRadius: 8,
-              offset: Offset(0, 2),
+              blurRadius: 12,
+              offset: Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(7),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: DoctorImage(imagePath: doctor.imagePath),
-                ),
+            if (!large)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 32,
+                    ),
+                    padding: EdgeInsets.zero,
+                    tooltip: appStrings.favorites,
+                    onPressed: pending
+                        ? null
+                        : () => context.read<FavoritesCubit>().toggleFavorite(
+                            doctor.id,
+                          ),
+                    icon: Icon(
+                      favorite ? Icons.favorite : Icons.favorite_border,
+                      color: favorite ? Colors.red : AppColors.textSub,
+                      size: 14,
+                    ),
+                  ),
+                  const Icon(Icons.star, color: AppColors.warning, size: 12),
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 8),
+                    child: Text(
+                      doctor.rating.toStringAsFixed(1),
+                      style: context.medium11TextMain,
+                    ),
+                  ),
+                ],
               ),
+            Expanded(
+              child: large
+                  ? SizedBox(
+                      width: double.infinity,
+                      child: DoctorImage(imagePath: doctor.imagePath),
+                    )
+                  : Center(
+                      child: ClipOval(
+                        child: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: DoctorImage(imagePath: doctor.imagePath),
+                        ),
+                      ),
+                    ),
             ),
-            const SizedBox(height: 7),
-            Text(
-              doctor.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.semiBold12TextMain,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              doctor.specialization,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.regular11TextSub,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                5,
-                (_) => const Icon(Icons.star, size: 12, color: AppColors.warning),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                6,
+                large ? 10 : 6,
+                6,
+                large ? 12 : 14,
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    doctor.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: large
+                        ? context.semiBold16TextMain
+                        : context.semiBold11TextMain,
+                  ),
+                  if (large) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      doctor.specialtyLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.regular11TextSub,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        5,
+                        (index) => Icon(
+                          index < doctor.rating.round()
+                              ? Icons.star
+                              : Icons.star_border,
+                          size: 13,
+                          color: AppColors.warning,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

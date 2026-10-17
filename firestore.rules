@@ -1,45 +1,173 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
+    function isSignedIn() { return request.auth != null; }
+    function currentUserData() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function isActiveUser() { return isSignedIn() && currentUserData().isActive == true; }
+    function hasRole(role) { return isActiveUser() && role in currentUserData().roles; }
+    function isAdmin() { return hasRole('admin'); }
+    function doctorPath(id) { return /databases/$(database)/documents/doctors/$(id); }
+    function appointmentPath(id) { return /databases/$(database)/documents/appointments/$(id); }
+    function slotPath(id) { return /databases/$(database)/documents/booking_slots/$(id); }
+    function validReview(a) {
+      return hasRole('patient') && a.patientId == request.auth.uid && a.status == 'completed'
+        && !('reviewRating' in a);
     }
-
-    function currentUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function validReviewCounter(doctorId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let id = after.reviewMutationId;
+      let a = get(appointmentPath(id)).data;
+      let reviewed = getAfter(appointmentPath(id)).data;
+      let count = before.get('reviewsCount', before.get('patientStories', 0));
+      let average = before.get('rating', 0);
+      return validReview(a) && a.doctorId == doctorId
+        && after.diff(before).affectedKeys().hasOnly(['rating','patientStories','reviewsCount','reviewMutationId'])
+        && reviewed.reviewRating is int && reviewed.reviewRating >= 1 && reviewed.reviewRating <= 5
+        && reviewed.reviewedAt == request.time
+        && after.patientStories == count + 1
+        && after.reviewsCount == count + 1
+        && getAfter(/databases/$(database)/documents/reviews/$(id)).data.rating == reviewed.reviewRating
+        && after.rating == (average * count + reviewed.reviewRating) / (count + 1);
     }
-
-    function isActiveUser() {
-      return isSignedIn() && currentUserData().isActive == true;
+    function validSlot(a) {
+      let doctor = get(doctorPath(a.doctorId)).data;
+      let schedule = doctor.availability;
+      let local = a.startsAt + duration.value(3, 'h');
+      let weekday = ((int(local.toMillis() / 86400000) + 3) % 7) + 1;
+      let minute = local.hours() * 60 + local.minutes();
+      return doctor.isAvailable == true && schedule.slotMinutes >= 5
+        && weekday in schedule.workingDays
+        && minute >= schedule.startMinute && minute + schedule.slotMinutes <= schedule.endMinute
+        && (minute - schedule.startMinute) % schedule.slotMinutes == 0
+        && a.startsAt.seconds() == 0 && a.startsAt.nanos() == 0
+        && a.endsAt == a.startsAt + duration.value(schedule.slotMinutes, 'm')
+        && a.startsAt > request.time && a.startsAt < request.time + duration.value(31, 'd')
+        && a.fee == doctor.price && a.doctorName == doctor.name
+        && a.specialization == doctor.specialization;
     }
-
-    function hasRole(role) {
-      return isActiveUser() && role in currentUserData().roles;
+    function validCounter(doctorId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let id = after.bookingMutationId;
+      let appointment = getAfter(appointmentPath(id)).data;
+      let count = before.get('activeBookingCount', 0);
+      return after.diff(before).affectedKeys().hasOnly(['activeBookingCount', 'bookingMutationId'])
+        && appointment.doctorId == doctorId && after.activeBookingCount >= 0
+        && ((!exists(appointmentPath(id)) && appointment.patientId == request.auth.uid
+              && appointment.status == 'upcoming' && after.activeBookingCount == count + 1)
+            || (exists(appointmentPath(id)) && get(appointmentPath(id)).data.status == 'upcoming'
+              && appointment.status in ['completed', 'cancelled']
+              && (isAdmin() || appointment.patientId == request.auth.uid)
+              && after.activeBookingCount == count - 1));
     }
-
-    function isAdmin() {
-      return hasRole('admin');
-    }
-
     match /users/{uid} {
       allow read: if isSignedIn() && request.auth.uid == uid;
       allow create: if isSignedIn() && request.auth.uid == uid
-        && request.resource.data.roles == ['patient']
-        && request.resource.data.isActive == true;
+        && request.resource.data.roles == ['patient'] && request.resource.data.isActive == true;
       allow update: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','email','phone','photoUrl',
+          'dateOfBirth','gender','notificationsEnabled','language','notificationTokens','favoriteDoctorIds','updatedAt'])
+        && (request.resource.data.email == resource.data.email || request.resource.data.email == request.auth.token.email)
         && request.resource.data.roles == resource.data.roles
         && request.resource.data.isActive == resource.data.isActive;
       allow delete: if false;
     }
-
+    match /settings/clinic {
+      allow read: if isActiveUser();
+      allow create, update: if isAdmin() && request.resource.data.keys().hasOnly(['location'])
+        && request.resource.data.location is string && request.resource.data.location.size() > 0;
+      allow delete: if false;
+    }
     match /doctors/{doctorId} {
       allow read: if isActiveUser();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /appointments/{appointmentId} {
-      allow read, create, update: if isSignedIn();
+      allow create: if isAdmin() && request.resource.data.get('activeBookingCount', 0) == 0;
+      allow update: if isActiveUser() && validCounter(doctorId)
+        || validReviewCounter(doctorId)
+        || isAdmin() && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['activeBookingCount', 'bookingMutationId','rating','patientStories','reviewsCount','reviewMutationId'])
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['availability'])
+            || resource.data.get('activeBookingCount', 0) == 0);
       allow delete: if false;
+    }
+    match /appointments/{appointmentId} {
+      allow update: if validReview(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewRating','reviewComment','reviewedAt'])
+        && request.resource.data.reviewRating is int
+        && request.resource.data.reviewRating >= 1 && request.resource.data.reviewRating <= 5
+        && request.resource.data.reviewComment is string && request.resource.data.reviewComment.size() <= 1000
+        && request.resource.data.reviewedAt == request.time
+        && getAfter(doctorPath(resource.data.doctorId)).data.reviewMutationId == appointmentId
+        && getAfter(doctorPath(resource.data.doctorId)).data.patientStories
+          == get(doctorPath(resource.data.doctorId)).data.get('reviewsCount', get(doctorPath(resource.data.doctorId)).data.get('patientStories', 0)) + 1
+        && getAfter(doctorPath(resource.data.doctorId)).data.rating
+          == (get(doctorPath(resource.data.doctorId)).data.get('rating', 0)
+            * get(doctorPath(resource.data.doctorId)).data.get('reviewsCount', get(doctorPath(resource.data.doctorId)).data.get('patientStories', 0))
+            + request.resource.data.reviewRating)
+            / (get(doctorPath(resource.data.doctorId)).data.get('reviewsCount', get(doctorPath(resource.data.doctorId)).data.get('patientStories', 0)) + 1)
+        && getAfter(/databases/$(database)/documents/reviews/$(appointmentId)).data.rating == request.resource.data.reviewRating;
+      allow read: if isActiveUser() && (isAdmin() || resource.data.patientId == request.auth.uid);
+      allow create: if hasRole('patient')
+        && request.resource.data.keys().hasOnly(['doctorId','patientId','doctorName','specialization',
+          'patientName','patientEmail','fee','currency','startsAt','endsAt','status','slotId','createdAt'])
+        && request.resource.data.patientId == request.auth.uid
+        && request.resource.data.patientName == currentUserData().name
+        && request.resource.data.patientEmail == currentUserData().email
+        && request.resource.data.currency == 'USD' && request.resource.data.status == 'upcoming'
+        && request.resource.data.createdAt == request.time && validSlot(request.resource.data)
+        && get(/databases/$(database)/documents/settings/clinic).data.location.size() > 0
+        && request.resource.data.slotId == request.resource.data.doctorId + '_' + string(request.resource.data.startsAt.toMillis())
+        && getAfter(slotPath(request.resource.data.slotId)).data.appointmentId == appointmentId
+        && getAfter(slotPath(request.resource.data.slotId)).data.active == true
+        && getAfter(doctorPath(request.resource.data.doctorId)).data.bookingMutationId == appointmentId
+        && getAfter(doctorPath(request.resource.data.doctorId)).data.activeBookingCount
+          == get(doctorPath(request.resource.data.doctorId)).data.get('activeBookingCount', 0) + 1;
+      allow update: if isActiveUser() && resource.data.status == 'upcoming'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && ((request.resource.data.status == 'cancelled' && (isAdmin() || resource.data.patientId == request.auth.uid))
+          || (request.resource.data.status == 'completed' && isAdmin() && resource.data.endsAt <= request.time))
+        && getAfter(slotPath(resource.data.slotId)).data.active == false
+        && getAfter(doctorPath(resource.data.doctorId)).data.bookingMutationId == appointmentId
+        && getAfter(doctorPath(resource.data.doctorId)).data.activeBookingCount
+          == get(doctorPath(resource.data.doctorId)).data.get('activeBookingCount', 0) - 1;
+      allow delete: if false;
+    }
+    match /booking_slots/{slotId} {
+      allow read: if isActiveUser();
+      function validReservation() {
+        let a = getAfter(appointmentPath(request.resource.data.appointmentId)).data;
+        return request.resource.data.keys().hasOnly(['appointmentId','doctorId','startsAt','active'])
+          && a.slotId == slotId && a.doctorId == request.resource.data.doctorId
+          && a.startsAt == request.resource.data.startsAt
+          && ((!exists(appointmentPath(request.resource.data.appointmentId))
+            && a.patientId == request.auth.uid && a.status == 'upcoming' && request.resource.data.active == true)
+          || (exists(appointmentPath(request.resource.data.appointmentId))
+            && get(appointmentPath(request.resource.data.appointmentId)).data.status == 'upcoming'
+            && a.status in ['completed','cancelled'] && request.resource.data.active == false
+            && (isAdmin() || a.patientId == request.auth.uid)));
+      }
+      allow create: if hasRole('patient') && validReservation();
+      allow update: if isActiveUser() && validReservation()
+        && (resource.data.active == false || request.resource.data.appointmentId == resource.data.appointmentId);
+      allow delete: if false;
+    }
+    match /reviews/{reviewId} {
+      allow read: if isActiveUser();
+      allow create: if hasRole('patient')
+        && request.resource.data.keys().hasOnly(['appointmentId','patientId','doctorId','patientName','rating','comment','createdAt'])
+        && request.resource.data.appointmentId == reviewId
+        && request.resource.data.patientId == request.auth.uid
+        && validReview(get(appointmentPath(reviewId)).data)
+        && request.resource.data.doctorId == get(appointmentPath(reviewId)).data.doctorId
+        && request.resource.data.patientName == get(appointmentPath(reviewId)).data.patientName
+        && request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.comment is string && request.resource.data.comment.size() <= 1000
+        && request.resource.data.createdAt == request.time
+        && getAfter(appointmentPath(reviewId)).data.reviewRating == request.resource.data.rating
+        && getAfter(appointmentPath(reviewId)).data.reviewComment == request.resource.data.comment
+        && getAfter(doctorPath(request.resource.data.doctorId)).data.reviewMutationId == reviewId;
+      allow update, delete: if false;
     }
   }
 }

@@ -48,7 +48,7 @@ Future<void> main() async {
     40,
   ];
   const String outputPath = 'lib/generated/';
-  const String importColorsClass = "import 'app_colors.dart';";
+  const String importColorsClass = "import '../apps/core/themes/app_colors.dart';";
   const nameColorsClass = 'AppColors';
 
   // Create a new file named 'style_atoms.dart'
@@ -77,7 +77,6 @@ Future<void> generateWeightAtoms(IOSink sink) async => sink.writeln('''
 extension WeightAtoms on BuildContext {
   TextStyle get style => Theme.of(this).textTheme.titleMedium!.copyWith(
         color: Color(0xFF1A1A1A),
-        fontFamily: 'Almarai',
       );
   TextStyle get light => style.copyWith(fontWeight: FontWeight.w300);
   TextStyle get regular => style.copyWith(fontWeight: FontWeight.normal);

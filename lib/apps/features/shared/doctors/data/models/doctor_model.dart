@@ -1,3 +1,6 @@
+import 'doctor_availability.dart';
+import 'doctor_specialty.dart';
+
 class DoctorModel {
   const DoctorModel({
     required this.id,
@@ -10,13 +13,17 @@ class DoctorModel {
     required this.price,
     required this.isAvailable,
     this.isPopular = false,
+    this.availability = const DoctorAvailability(),
     this.isFeatured = false,
     this.isFavorite = false,
+    String? imageUrl,
   });
 
   final String id;
+  final DoctorAvailability availability;
   final String name;
   final String specialization;
+  String get specialtyLabel => DoctorSpecialty.label(specialization);
   final String imagePath;
   final double rating;
   final int experience;
@@ -28,18 +35,19 @@ class DoctorModel {
   final bool isFavorite;
 
   Map<String, dynamic> toMap() => {
-        'name': name,
-        'specialization': specialization,
-        'imagePath': imagePath,
-        'rating': rating,
-        'experience': experience,
-        'patientStories': patientStories,
-        'price': price,
-        'isAvailable': isAvailable,
-        'isPopular': isPopular,
-        'isFeatured': isFeatured,
-        'isFavorite': isFavorite,
-      };
+    'name': name,
+    'availability': availability.toMap(),
+    'specialization': specialization,
+    'imagePath': imagePath,
+    'rating': rating,
+    'experience': experience,
+    'patientStories': patientStories,
+    'price': price,
+    'isAvailable': isAvailable,
+    'isPopular': isPopular,
+    'isFeatured': isFeatured,
+    'isFavorite': isFavorite,
+  };
 
   factory DoctorModel.fromMap({
     required String id,
@@ -47,12 +55,18 @@ class DoctorModel {
   }) {
     return DoctorModel(
       id: id,
+      availability: DoctorAvailability.fromMap(
+        Map<String, dynamic>.from(map['availability'] as Map? ?? {}),
+      ),
       name: map['name'] as String? ?? '',
       specialization: map['specialization'] as String? ?? '',
       imagePath: map['imagePath'] as String? ?? '',
       rating: (map['rating'] as num?)?.toDouble() ?? 0,
       experience: (map['experience'] as num?)?.toInt() ?? 0,
-      patientStories: (map['patientStories'] as num?)?.toInt() ?? 0,
+      patientStories:
+          (map['reviewsCount'] as num? ?? map['patientStories'] as num?)
+              ?.toInt() ??
+          0,
       price: (map['price'] as num?)?.toDouble() ?? 0,
       isAvailable: map['isAvailable'] as bool? ?? true,
       isPopular: map['isPopular'] as bool? ?? false,
@@ -63,6 +77,7 @@ class DoctorModel {
 
   DoctorModel copyWith({
     String? id,
+    DoctorAvailability? availability,
     String? name,
     String? specialization,
     String? imagePath,
@@ -77,6 +92,7 @@ class DoctorModel {
   }) {
     return DoctorModel(
       id: id ?? this.id,
+      availability: availability ?? this.availability,
       name: name ?? this.name,
       specialization: specialization ?? this.specialization,
       imagePath: imagePath ?? this.imagePath,

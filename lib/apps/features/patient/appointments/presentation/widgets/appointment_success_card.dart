@@ -20,11 +20,14 @@ class AppointmentSuccessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String formattedDate = DateFormat('MMMM d').format(selectedDate);
+    var appStrings = context.t;
+
+    final String formattedDate = DateFormat(
+      'MMMM d',
+      LocaleSettings.currentLocale.languageCode,
+    ).format(selectedDate);
 
     final String formattedTime = selectedTime.format(context);
-
-    var appStrings = t;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -54,7 +57,7 @@ class AppointmentSuccessCard extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              t.done,
+              appStrings.done,
               textAlign: TextAlign.center,
               style: context.regular14TextSub,
             ),
@@ -74,16 +77,6 @@ class AppointmentSuccessCard extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                appStrings.editAppointment,
-                style: context.regular14TextSub,
-              ),
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:doctor_hunt/apps/core/extensions/localized_error.dart';
 import 'dart:async';
 
 import 'package:doctor_hunt/apps/features/patient/doctors_find/presentation/bloc/doctors_state.dart';
@@ -7,17 +8,30 @@ import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_mode
 import 'package:doctor_hunt/apps/features/shared/doctors/data/services/doctors_firestore_service.dart';
 
 import 'doctors_find_event.dart';
+import '../../../../shared/doctors/data/models/doctor_specialty.dart';
 
-class DoctorsFindBloc
-    extends Bloc<DoctorsFindEvent, DoctorsFindState> {
-  DoctorsFindBloc({
-    required DoctorsFirestoreService doctorsService,
-  })  : _doctorsService = doctorsService,
-        super(const DoctorsFindState()) {
+class DoctorsFindBloc extends Bloc<DoctorsFindEvent, DoctorsFindState> {
+  DoctorsFindBloc({required DoctorsFirestoreService doctorsService})
+    : _doctorsService = doctorsService,
+      super(const DoctorsFindState()) {
     on<DoctorsFindStarted>(_onStarted);
     on<DoctorsFindDoctorsUpdated>(_onDoctorsUpdated);
     on<DoctorsFindSearchChanged>(_onSearchChanged);
     on<DoctorsFindFailed>(_onFailed);
+    on<DoctorsFindFiltersChanged>(
+      (event, emit) => emit(
+        state.copyWith(
+          specialty: event.specialty == null
+              ? null
+              : DoctorSpecialty.id(event.specialty!),
+          sortBy: event.sortBy == null
+              ? null
+              : event.sortBy == 'rating'
+              ? 'rating'
+              : 'popular',
+        ),
+      ),
+    );
   }
 
   final DoctorsFirestoreService _doctorsService;
@@ -32,25 +46,14 @@ class DoctorsFindBloc
       return;
     }
 
-    emit(
-      state.copyWith(
-        status: DoctorsFindStatus.loading,
-        errorMessage: null,
-      ),
-    );
+    emit(state.copyWith(status: DoctorsFindStatus.loading, errorMessage: null));
 
     _doctorsSubscription = _doctorsService.watchDoctors().listen(
       (doctors) {
-        add(
-          DoctorsFindDoctorsUpdated(doctors),
-        );
+        add(DoctorsFindDoctorsUpdated(doctors));
       },
       onError: (error) {
-        add(
-          DoctorsFindFailed(
-            error.toString(),
-          ),
-        );
+        add(DoctorsFindFailed(localizedError(error)));
       },
     );
   }
@@ -59,10 +62,7 @@ class DoctorsFindBloc
     DoctorsFindDoctorsUpdated event,
     Emitter<DoctorsFindState> emit,
   ) {
-    final filteredDoctors = _filterDoctors(
-      event.doctors,
-      state.searchText,
-    );
+    final filteredDoctors = _filterDoctors(event.doctors, state.searchText);
 
     emit(
       state.copyWith(
@@ -70,9 +70,7 @@ class DoctorsFindBloc
             ? DoctorsFindStatus.empty
             : DoctorsFindStatus.success,
         doctors: List.unmodifiable(event.doctors),
-        filteredDoctors: List.unmodifiable(
-          filteredDoctors,
-        ),
+        filteredDoctors: List.unmodifiable(filteredDoctors),
         errorMessage: null,
       ),
     );
@@ -82,25 +80,17 @@ class DoctorsFindBloc
     DoctorsFindSearchChanged event,
     Emitter<DoctorsFindState> emit,
   ) {
-    final filteredDoctors = _filterDoctors(
-      state.doctors,
-      event.value,
-    );
+    final filteredDoctors = _filterDoctors(state.doctors, event.value);
 
     emit(
       state.copyWith(
         searchText: event.value,
-        filteredDoctors: List.unmodifiable(
-          filteredDoctors,
-        ),
+        filteredDoctors: List.unmodifiable(filteredDoctors),
       ),
     );
   }
 
-  void _onFailed(
-    DoctorsFindFailed event,
-    Emitter<DoctorsFindState> emit,
-  ) {
+  void _onFailed(DoctorsFindFailed event, Emitter<DoctorsFindState> emit) {
     emit(
       state.copyWith(
         status: DoctorsFindStatus.failure,
@@ -109,19 +99,18 @@ class DoctorsFindBloc
     );
   }
 
-  List<DoctorModel> _filterDoctors(
-    List<DoctorModel> doctors,
-    String value,
-  ) {
+  List<DoctorModel> _filterDoctors(List<DoctorModel> doctors, String value) {
     final query = value.trim().toLowerCase();
 
     if (query.isEmpty) {
-      return doctors;
+      return doctors.where((doctor) => doctor.isAvailable).toList();
     }
 
     return doctors.where((doctor) {
-      return doctor.name.toLowerCase().contains(query) ||
-          doctor.specialization.toLowerCase().contains(query);
+      return doctor.isAvailable &&
+          (doctor.name.toLowerCase().contains(query) ||
+              doctor.specialization.toLowerCase().contains(query) ||
+              doctor.specialtyLabel.toLowerCase().contains(query));
     }).toList();
   }
 

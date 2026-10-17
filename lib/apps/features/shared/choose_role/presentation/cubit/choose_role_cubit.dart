@@ -11,10 +11,6 @@ class ChooseRoleCubit extends Cubit<ChooseRoleState> {
       return;
     }
 
-    emit(
-      state.copyWith(
-        selectedRole: role,
-      ),
-    );
+    emit(state.copyWith(selectedRole: role));
   }
 }

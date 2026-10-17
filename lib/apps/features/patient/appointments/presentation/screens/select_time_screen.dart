@@ -1,10 +1,12 @@
 import 'package:doctor_hunt/apps/core/widgets/primary_button.dart';
 import 'package:doctor_hunt/apps/core/themes/app_colors.dart';
 import 'package:doctor_hunt/apps/features/patient/appointments/data/models/time_slot_model.dart';
-import 'package:doctor_hunt/apps/features/patient/appointments/data/services/select_time_service.dart';
+import 'package:doctor_hunt/apps/core/di/injection_container.dart';
+import 'package:doctor_hunt/apps/features/shared/appointments/data/appointment_service.dart';
+import 'package:doctor_hunt/apps/features/shared/doctors/data/services/doctors_firestore_service.dart';
+import 'review_appointment_screen.dart';
 import 'package:doctor_hunt/apps/features/patient/appointments/presentation/cubit/select_time_cubit.dart';
 import 'package:doctor_hunt/apps/features/patient/appointments/presentation/cubit/select_time_state.dart';
-import 'package:doctor_hunt/apps/features/patient/appointments/presentation/widgets/appointment_success_card.dart';
 import 'package:doctor_hunt/apps/features/patient/appointments/presentation/widgets/select_time_doctor_card.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_model.dart';
 import 'package:doctor_hunt/generated/strings.g.dart';
@@ -12,6 +14,8 @@ import 'package:doctor_hunt/generated/style_atoms.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:doctor_hunt/apps/core/router/app_router.dart';
 import 'package:intl/intl.dart';
 
 class SelectTimeScreen extends StatelessWidget {
@@ -21,13 +25,26 @@ class SelectTimeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var appStrings = t;
+    var appStrings = context.t;
 
     return BlocProvider(
-      create: (_) => SelectTimeCubit(),
+      create: (_) => SelectTimeCubit(
+        doctor: doctor,
+        appointments: getIt<AppointmentService>(),
+        doctors: getIt<DoctorsFirestoreService>(),
+      ),
       child: Scaffold(
         appBar: AppBar(
           title: Text(appStrings.selecttime, style: context.semiBold16TextMain),
+          leading: BackButton(
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(AppRouter.home);
+              }
+            },
+          ),
         ),
         body: SafeArea(
           child: ListView(
@@ -37,7 +54,22 @@ class SelectTimeScreen extends StatelessWidget {
               const SizedBox(height: 20),
               BlocBuilder<SelectTimeCubit, SelectTimeState>(
                 builder: (context, state) {
-                  final DateTime now = DateTime.now();
+                  if (state.errorMessage != null) {
+                    return Column(
+                      children: [
+                        Text(state.errorMessage!, textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        OutlinedButton(
+                          onPressed: context.read<SelectTimeCubit>().retry,
+                          child: Text(appStrings.commonUi.tryAgain),
+                        ),
+                      ],
+                    );
+                  }
+                  if (state.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final DateTime now = riyadhNow();
 
                   final DateTime today = DateTime(now.year, now.month, now.day);
 
@@ -47,13 +79,29 @@ class SelectTimeScreen extends StatelessWidget {
                     state.selectedDate.day,
                   );
 
-                  final DateTime nextAvailableDate = selectedDate.add(
-                    const Duration(days: 1),
-                  );
+                  DateTime? nextAvailableDate;
+                  final lastDate = today.add(const Duration(days: 30));
+                  for (
+                    var date = selectedDate.add(const Duration(days: 1));
+                    !date.isAfter(lastDate);
+                    date = date.add(const Duration(days: 1))
+                  ) {
+                    if (context
+                        .read<SelectTimeCubit>()
+                        .slotsForDate(date)
+                        .isNotEmpty) {
+                      nextAvailableDate = date;
+                      break;
+                    }
+                  }
+
+                  final morningSlots = state.availableSlots
+                      .where((slot) => slot.hour < 12)
+                      .toList();
 
                   final List<TimeSlotModel> afternoonSlots = state
                       .availableSlots
-                      .where((slot) => slot.hour < 17)
+                      .where((slot) => slot.hour >= 12 && slot.hour < 17)
                       .toList();
 
                   final List<TimeSlotModel> eveningSlots = state.availableSlots
@@ -67,12 +115,19 @@ class SelectTimeScreen extends StatelessWidget {
 
                   final String dateLabel = isToday
                       ? '${appStrings.today}, '
-                            '${DateFormat('d MMM').format(selectedDate)}'
-                      : DateFormat('EEEE, d MMM').format(selectedDate);
+                            '${DateFormat('d MMM', LocaleSettings.currentLocale.languageCode).format(selectedDate)}'
+                      : DateFormat(
+                          'EEEE, d MMM',
+                          LocaleSettings.currentLocale.languageCode,
+                        ).format(selectedDate);
 
-                  final String nextAvailableDateLabel = DateFormat(
-                    'EEE, d MMM',
-                  ).format(nextAvailableDate);
+                  final String nextAvailableDateLabel =
+                      nextAvailableDate == null
+                      ? ''
+                      : DateFormat(
+                          'EEE, d MMM',
+                          LocaleSettings.currentLocale.languageCode,
+                        ).format(nextAvailableDate);
 
                   Widget buildSlots(List<TimeSlotModel> slots) {
                     return Wrap(
@@ -90,13 +145,17 @@ class SelectTimeScreen extends StatelessWidget {
 
                         return ChoiceChip(
                           label: Text(time.format(context)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                           selected: isSelected,
                           showCheckmark: false,
                           selectedColor: AppColors.primary,
                           backgroundColor: AppColors.primaryLight,
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           labelStyle: isSelected
                               ? context.medium12Primary.copyWith(
@@ -114,6 +173,36 @@ class SelectTimeScreen extends StatelessWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              DateFormat(
+                                'MMMM yyyy',
+                                LocaleSettings.currentLocale.languageCode,
+                              ).format(selectedDate),
+                              style: context.semiBold16TextMain,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.calendar_month_outlined),
+                            tooltip: appStrings.commonUi.chooseDate,
+                            onPressed: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: selectedDate,
+                                firstDate: today,
+                                lastDate: lastDate,
+                              );
+                              if (date != null && context.mounted) {
+                                context.read<SelectTimeCubit>().selectDate(
+                                  date,
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                       EasyDateTimeLinePicker.itemBuilder(
                         focusedDate: selectedDate,
                         firstDate: today,
@@ -142,18 +231,23 @@ class SelectTimeScreen extends StatelessWidget {
                                   date.month == tomorrow.month &&
                                   date.day == tomorrow.day;
 
-                              final int slotsCount =
-                                  SelectTimeService.slotsForDate(date).length;
+                              final int slotsCount = context
+                                  .read<SelectTimeCubit>()
+                                  .slotsForDate(date)
+                                  .length;
 
                               final String dayName = isCurrentDay
                                   ? appStrings.today
                                   : isTomorrow
                                   ? appStrings.tomorrow
-                                  : DateFormat('EEE').format(date);
+                                  : DateFormat(
+                                      'EEE',
+                                      LocaleSettings.currentLocale.languageCode,
+                                    ).format(date);
 
                               final String title =
                                   '$dayName, '
-                                  '${DateFormat('d MMM').format(date)}';
+                                  '${DateFormat('d MMM', LocaleSettings.currentLocale.languageCode).format(date)}';
 
                               final String availability = slotsCount == 0
                                   ? appStrings.noSlotsAvailable
@@ -186,7 +280,7 @@ class SelectTimeScreen extends StatelessWidget {
                                         title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: context.semiBold16TextMain
+                                        style: context.semiBold14TextMain
                                             .copyWith(
                                               color: isSelected
                                                   ? AppColors.white
@@ -230,45 +324,31 @@ class SelectTimeScreen extends StatelessWidget {
                               style: context.regular14TextSub,
                             ),
                             const SizedBox(height: 18),
-                            PrimaryButton(
-                              label:
-                                  '${appStrings.nextAvailabilityOn} '
-                                  '$nextAvailableDateLabel',
-                              onPressed: () {
-                                context.read<SelectTimeCubit>().selectDate(
-                                  nextAvailableDate,
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              appStrings.orText,
-                              style: context.regular14TextSub,
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 52,
-                              child: OutlinedButton(
-                                onPressed: () {},
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.primary,
-                                  side: const BorderSide(
-                                    color: AppColors.primary,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: Text(
-                                  appStrings.contactClinic,
-                                  style: context.medium14Primary,
-                                ),
+                            if (nextAvailableDate != null)
+                              PrimaryButton(
+                                label:
+                                    '${appStrings.nextAvailabilityOn} '
+                                    '$nextAvailableDateLabel',
+                                onPressed: () {
+                                  context.read<SelectTimeCubit>().selectDate(
+                                    nextAvailableDate!,
+                                  );
+                                },
                               ),
-                            ),
                           ],
                         )
                       else ...[
+                        if (morningSlots.isNotEmpty) ...[
+                          Text(
+                            appStrings.commonUi.morningSlots(
+                              count: morningSlots.length,
+                            ),
+                            style: context.semiBold16TextMain,
+                          ),
+                          const SizedBox(height: 12),
+                          buildSlots(morningSlots),
+                          const SizedBox(height: 20),
+                        ],
                         if (afternoonSlots.isNotEmpty) ...[
                           Text(
                             '${appStrings.afternoon} '
@@ -296,7 +376,7 @@ class SelectTimeScreen extends StatelessWidget {
                       if (state.selectedTime != null) ...[
                         const SizedBox(height: 28),
                         PrimaryButton(
-                          label: appStrings.bookAppointment,
+                          label: appStrings.commonUi.confirm,
                           onPressed: () {
                             final TimeOfDay? selectedTime = state.selectedTime;
 
@@ -304,15 +384,16 @@ class SelectTimeScreen extends StatelessWidget {
                               return;
                             }
 
-                            showDialog<void>(
-                              context: context,
-                              builder: (dialogContext) {
-                                return AppointmentSuccessCard(
-                                  doctor: doctor,
-                                  selectedDate: state.selectedDate,
-                                  selectedTime: selectedTime,
-                                );
-                              },
+                            Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => ReviewAppointmentScreen(
+                                  doctor: context
+                                      .read<SelectTimeCubit>()
+                                      .doctor,
+                                  date: state.selectedDate,
+                                  time: selectedTime,
+                                ),
+                              ),
                             );
                           },
                         ),

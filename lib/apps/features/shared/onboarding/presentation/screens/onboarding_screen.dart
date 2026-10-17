@@ -34,7 +34,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var appStrings = t;
+    var appStrings = context.t;
     return BlocProvider(
       create: (context) => OnboardingCubit(),
       child: Builder(
@@ -103,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   : appStrings.next,
                               onPressed: () {
                                 if (isLastPage) {
-                                  context.go(AppRouter.login);
+                                  context.go(AppRouter.chooseRole);
                                   return;
                                 }
 
@@ -117,7 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               const SizedBox(height: 8),
                               TextButton(
                                 onPressed: () {
-                                  context.go(AppRouter.login);
+                                  context.go(AppRouter.chooseRole);
                                 },
                                 child: Text(
                                   appStrings.skip,

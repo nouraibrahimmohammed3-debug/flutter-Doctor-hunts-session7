@@ -11,6 +11,7 @@ import 'package:doctor_hunt/apps/features/admin/add_doctor/bloc/add_doctor_event
 import 'package:doctor_hunt/apps/features/admin/add_doctor/bloc/add_doctor_state.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_model.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/presentation/cubit/doctor_form_cubit.dart';
+import 'package:doctor_hunt/apps/features/shared/doctors/data/services/doctor_photo_service.dart';
 import 'package:doctor_hunt/apps/features/shared/doctors/presentation/widgets/doctor_form_fields.dart';
 import 'package:doctor_hunt/generated/strings.g.dart';
 
@@ -19,8 +20,16 @@ class AddDoctorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<AddDoctorBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => getIt<AddDoctorBloc>()),
+        BlocProvider(
+          create: (_) => DoctorFormCubit(
+            photoService: getIt<DoctorPhotoService>(),
+            initialState: const DoctorFormState(),
+          ),
+        ),
+      ],
       child: const _AddDoctorView(),
     );
   }
@@ -38,6 +47,8 @@ class _AddDoctorViewState extends State<_AddDoctorView> {
 
   @override
   Widget build(BuildContext context) {
+    var appStrings = context.t;
+
     return BlocListener<AddDoctorBloc, AddDoctorState>(
       listenWhen: (previous, current) =>
           previous.status != current.status ||
@@ -48,8 +59,7 @@ class _AddDoctorViewState extends State<_AddDoctorView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                state.successMessage ??
-                    'Doctor added successfully.',
+                state.successMessage ?? appStrings.commonUi.doctorAdded,
               ),
             ),
           );
@@ -62,8 +72,7 @@ class _AddDoctorViewState extends State<_AddDoctorView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                state.errorMessage ??
-                    'Failed to add doctor.',
+                state.errorMessage ?? appStrings.commonUi.doctorAddFailed,
               ),
             ),
           );
@@ -71,7 +80,7 @@ class _AddDoctorViewState extends State<_AddDoctorView> {
       },
       child: Scaffold(
         appBar: DoctorHuntAppBar(
-          title: t.createDoctor,
+          title: appStrings.createDoctor,
           showBackButton: true,
         ),
         body: SafeArea(
@@ -87,40 +96,17 @@ class _AddDoctorViewState extends State<_AddDoctorView> {
 
                   const Gap(20),
 
-                  Text(t.doctorImage),
-
-                  const Gap(8),
-
-                  Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .outlineVariant,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        t.uploadDoctorImage,
-                      ),
-                    ),
-                  ),
-
-                  const Gap(32),
-
                   BlocBuilder<AddDoctorBloc, AddDoctorState>(
                     buildWhen: (previous, current) =>
                         previous.status != current.status,
                     builder: (context, state) {
-                      final loading =
-                          state.status ==
-                          AddDoctorStatus.loading;
+                      final loading = state.status == AddDoctorStatus.loading;
 
                       return PrimaryButton(
-                        label: t.createDoctor,
-                        onPressed: loading
+                        label: appStrings.createDoctor,
+                        onPressed:
+                            loading ||
+                                context.watch<DoctorFormCubit>().state.uploading
                             ? null
                             : () => _submit(context),
                       );
@@ -141,6 +127,7 @@ class _AddDoctorViewState extends State<_AddDoctorView> {
     }
 
     final form = context.read<DoctorFormCubit>().state;
+    if (form.uploading) return;
 
     final specialization = form.specialization;
 
@@ -152,16 +139,14 @@ class _AddDoctorViewState extends State<_AddDoctorView> {
       id: '',
       name: form.name.trim(),
       specialization: specialization,
-      imagePath: '',
+      imagePath: form.imagePath,
       rating: 0,
       experience: 0,
       patientStories: 0,
-      price: 0,
+      price: double.parse(form.fee.trim()),
       isAvailable: true,
     );
 
-    context.read<AddDoctorBloc>().add(
-          AddDoctorSubmitted(doctor),
-        );
+    context.read<AddDoctorBloc>().add(AddDoctorSubmitted(doctor));
   }
 }

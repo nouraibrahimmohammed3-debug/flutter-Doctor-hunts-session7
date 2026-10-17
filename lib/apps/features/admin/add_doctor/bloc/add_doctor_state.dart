@@ -1,9 +1,4 @@
-enum AddDoctorStatus {
-  initial,
-  loading,
-  success,
-  failure,
-}
+enum AddDoctorStatus { initial, loading, success, failure }
 
 class AddDoctorState {
   const AddDoctorState({
@@ -25,9 +20,7 @@ class AddDoctorState {
   }) {
     return AddDoctorState(
       status: status ?? this.status,
-      errorMessage: clearError
-          ? null
-          : errorMessage ?? this.errorMessage,
+      errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       successMessage: clearSuccess
           ? null
           : successMessage ?? this.successMessage,

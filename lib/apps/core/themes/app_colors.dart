@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 abstract final class AppColors {
   // Primary
-  static const primary = Color(0xFF05C98B);
+  static const primary = Color(0xFF0EBE7F);
   static const primaryLight = Color(0xFFE9FFF7);
   static const primaryDark = Color(0xFF049F70);
 
@@ -12,8 +12,9 @@ abstract final class AppColors {
   static const secondaryDark = Color(0xFF3459C7);
 
   // Text
-  static const textMain = Color(0xFF20242B);
-  static const textSub = Color(0xFF8B929C);
+  static const textMain = Color(0xFF222B27);
+  static const textSub = Color(0xFF8590B2);
+  static const adminBackground = Color(0xFFF2FBF5);
   static const textPlaceholder = Color(0xFFB8BEC6);
   static const textBorders = Color(0xFFDDE2E7);
 
@@ -33,5 +34,5 @@ abstract final class AppColors {
   static const alabaster = Color.fromARGB(255, 250, 250, 248);
 
   // Effects
-  static const boxShadow = Color(0x1A000000);
+  static const boxShadow = Color(0x08000000);
 }

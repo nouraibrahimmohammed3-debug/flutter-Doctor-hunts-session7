@@ -1,96 +1,88 @@
-
+import 'package:doctor_hunt/apps/core/extensions/localized_error.dart';
 import 'dart:async';
-
-import 'package:doctor_hunt/apps/features/patient/favourites/presentation/cubit/favorites_state.dart';
-import 'package:doctor_hunt/apps/features/shared/doctors/data/models/doctor_model.dart';
-import 'package:doctor_hunt/apps/features/shared/doctors/data/services/doctors_firestore_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../data/services/favorites_firestore_service.dart';
+import '../../../../shared/doctors/data/models/doctor_model.dart';
+import '../../../../shared/doctors/data/services/doctors_firestore_service.dart';
+import 'favorites_state.dart';
 
 class FavoritesCubit extends Cubit<FavoritesState> {
   FavoritesCubit({
     required DoctorsFirestoreService doctorsService,
-    Iterable<String> initialFavoriteIds = const [],
-  })  : _doctorsService = doctorsService,
-        super(
-          FavoritesState(
-            favoriteDoctorIds: Set.unmodifiable(
-              initialFavoriteIds,
-            ),
-          ),
-        );
-
+    required FavoritesFirestoreService favoritesService,
+    required String? userId,
+  }) : _doctorsService = doctorsService,
+       _favoritesService = favoritesService,
+       _userId = userId,
+       super(const FavoritesState());
   final DoctorsFirestoreService _doctorsService;
-
-  StreamSubscription<List<DoctorModel>>? _subscription;
-
+  final FavoritesFirestoreService _favoritesService;
+  final String? _userId;
+  StreamSubscription<List<DoctorModel>>? _doctorsSubscription;
+  StreamSubscription<Set<String>>? _favoritesSubscription;
+  bool _doctorsLoaded = false;
+  bool _favoritesLoaded = false;
   void start() {
-    if (_subscription != null) {
+    if (_doctorsSubscription != null || _userId == null) return;
+    emit(state.copyWith(status: FavoritesStatus.loading));
+    _doctorsSubscription = _doctorsService.watchDoctors().listen((doctors) {
+      _doctorsLoaded = true;
+      emit(state.copyWith(doctors: List.unmodifiable(doctors)));
+      _updateStatus();
+    }, onError: _onError);
+    _favoritesSubscription = _favoritesService.watchFavorites(_userId).listen((
+      ids,
+    ) {
+      _favoritesLoaded = true;
+      emit(state.copyWith(favoriteDoctorIds: Set.unmodifiable(ids)));
+      _updateStatus();
+    }, onError: _onError);
+  }
+
+  void _updateStatus() {
+    if (!_doctorsLoaded || !_favoritesLoaded) return;
+    emit(state.copyWith(status: FavoritesStatus.success));
+  }
+
+  void _onError(Object error) => emit(
+    state.copyWith(
+      status: FavoritesStatus.failure,
+      errorMessage: localizedError(error),
+    ),
+  );
+  Future<void> toggleFavorite(String doctorId) async {
+    if (_userId == null ||
+        !_favoritesLoaded ||
+        state.pendingDoctorIds.contains(doctorId)) {
       return;
     }
-
+    final favorite = !isFavorite(doctorId);
     emit(
-      state.copyWith(
-        status: FavoritesStatus.loading,
-      ),
+      state.copyWith(pendingDoctorIds: {...state.pendingDoctorIds, doctorId}),
     );
-
-    _subscription = _doctorsService.watchDoctors().listen(
-      (doctors) {
+    try {
+      await _favoritesService.setFavorite(_userId, doctorId, favorite);
+    } catch (error) {
+      if (!isClosed) emit(state.copyWith(errorMessage: localizedError(error)));
+    } finally {
+      if (!isClosed) {
         emit(
           state.copyWith(
-            status: doctors.isEmpty
-                ? FavoritesStatus.empty
-                : FavoritesStatus.success,
-            doctors: List.unmodifiable(doctors),
-            errorMessage: null,
+            pendingDoctorIds: {...state.pendingDoctorIds}..remove(doctorId),
+            errorMessage: state.errorMessage,
           ),
         );
-      },
-      onError: (error) {
-        emit(
-          state.copyWith(
-            status: FavoritesStatus.failure,
-            errorMessage: error.toString(),
-          ),
-        );
-      },
-    );
-  }
-
-  void toggleFavorite(String doctorId) {
-    final updatedIds = Set<String>.from(
-      state.favoriteDoctorIds,
-    );
-
-    if (updatedIds.contains(doctorId)) {
-      updatedIds.remove(doctorId);
-    } else {
-      updatedIds.add(doctorId);
+      }
     }
-
-    emit(
-      state.copyWith(
-        favoriteDoctorIds: Set.unmodifiable(updatedIds),
-      ),
-    );
   }
 
-  void search(String value) {
-    emit(
-      state.copyWith(
-        searchText: value.trim().toLowerCase(),
-      ),
-    );
-  }
-
-  bool isFavorite(String doctorId) {
-    return state.favoriteDoctorIds.contains(doctorId);
-  }
-
+  void search(String value) => emit(state.copyWith(searchText: value));
+  bool isFavorite(String doctorId) =>
+      state.favoriteDoctorIds.contains(doctorId);
   @override
   Future<void> close() async {
-    await _subscription?.cancel();
+    await _doctorsSubscription?.cancel();
+    await _favoritesSubscription?.cancel();
     return super.close();
   }
 }
-

@@ -27,6 +27,18 @@ class DoctorImage extends StatelessWidget {
       );
     }
 
+    if (Uri.tryParse(imagePath)?.scheme case 'http' || 'https') {
+      return Image.network(
+        imagePath,
+        fit: fit,
+        errorBuilder: (_, __, ___) => const ColoredBox(
+          color: AppColors.secondaryLight,
+          child: Center(
+            child: Icon(Icons.person_outline, color: AppColors.secondary),
+          ),
+        ),
+      );
+    }
     return Image.asset(
       imagePath,
       fit: fit,

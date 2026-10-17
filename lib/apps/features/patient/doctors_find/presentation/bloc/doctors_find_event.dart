@@ -14,6 +14,12 @@ class DoctorsFindSearchChanged extends DoctorsFindEvent {
   final String value;
 }
 
+class DoctorsFindFiltersChanged extends DoctorsFindEvent {
+  const DoctorsFindFiltersChanged({this.specialty, this.sortBy});
+  final String? specialty;
+  final String? sortBy;
+}
+
 class DoctorsFindDoctorsUpdated extends DoctorsFindEvent {
   const DoctorsFindDoctorsUpdated(this.doctors);
 

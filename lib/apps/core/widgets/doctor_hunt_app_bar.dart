@@ -7,23 +7,25 @@ class DoctorHuntAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.showBackButton = false,
     this.actions,
+    this.onBackPressed,
     super.key,
   });
 
   final String title;
   final bool showBackButton;
   final List<Widget>? actions;
+  final VoidCallback? onBackPressed;
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.primary,
-      foregroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
+      foregroundColor: AppColors.textMain,
       automaticallyImplyLeading: showBackButton,
-      title: Text(
-        title,
-        style: context.semiBold16TextMain.copyWith(color: AppColors.white),
-      ),
+      leading: showBackButton && onBackPressed != null
+          ? BackButton(onPressed: onBackPressed)
+          : null,
+      title: Text(title, style: context.bold18TextMain),
       actions: actions,
     );
   }

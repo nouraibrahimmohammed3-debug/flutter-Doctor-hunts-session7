@@ -2,6 +2,11 @@ import 'package:doctor_hunt/apps/core/router/app_router.dart';
 import 'package:doctor_hunt/apps/core/widgets/doctor_hunt_app_bar.dart';
 import 'package:doctor_hunt/generated/strings.g.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:doctor_hunt/apps/core/di/injection_container.dart';
+import 'package:doctor_hunt/apps/features/shared/appointments/data/appointment_service.dart';
+import 'package:doctor_hunt/apps/features/patient/favourites/presentation/cubit/favorites_cubit.dart';
+import 'package:doctor_hunt/apps/features/patient/favourites/presentation/cubit/favorites_state.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:doctor_hunt/apps/core/themes/app_colors.dart';
@@ -16,8 +21,20 @@ class DoctorDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var appStrings = context.t;
+
     return Scaffold(
-      appBar: DoctorHuntAppBar(title: 'Creat Doctor'),
+      appBar: DoctorHuntAppBar(
+        title: appStrings.doctorDetails,
+        showBackButton: true,
+        onBackPressed: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go(AppRouter.home);
+          }
+        },
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -26,14 +43,60 @@ class DoctorDetailsScreen extends StatelessWidget {
             const SizedBox(height: 18),
             _DoctorStats(doctor: doctor),
             const SizedBox(height: 22),
-            Text(t.services, style: context.semiBold16TextMain),
+            Text(appStrings.services, style: context.semiBold16TextMain),
             const SizedBox(height: 12),
-            _ServiceItem(number: 1, text: t.serviceOne),
-            _ServiceItem(number: 2, text: t.serviceTwo),
-            _ServiceItem(number: 3, text: t.serviceThree),
+            _ServiceItem(number: 1, text: appStrings.serviceOne),
+            _ServiceItem(number: 2, text: appStrings.serviceTwo),
+            _ServiceItem(number: 3, text: appStrings.serviceThree),
             const SizedBox(height: 22),
-            Text(t.location, style: context.semiBold16TextMain),
+            Text(
+              appStrings.doctorReviews.title,
+              style: context.semiBold16TextMain,
+            ),
             const SizedBox(height: 12),
+            StreamBuilder<List<Map<String, dynamic>>>(
+              stream: getIt<AppointmentService>().watchReviews(doctor.id),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) return Text(appStrings.retry);
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.data!.isEmpty) {
+                  return Text(appStrings.doctorReviews.empty);
+                }
+                return Column(
+                  children: [
+                    for (final review in snapshot.data!)
+                      Card(
+                        child: ListTile(
+                          title: Text(review['patientName'] as String? ?? ''),
+                          subtitle: Text(review['comment'] as String? ?? ''),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star, color: AppColors.warning),
+                              Text('${review['rating']}/5'),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 22),
+            Text(appStrings.location, style: context.semiBold16TextMain),
+            const SizedBox(height: 12),
+            StreamBuilder<String>(
+              stream: getIt<AppointmentService>().watchClinicLocation(),
+              builder: (_, snapshot) => Text(
+                snapshot.hasError
+                    ? appStrings.commonUi.clinicLoadFailed
+                    : snapshot.data?.isNotEmpty == true
+                    ? snapshot.data!
+                    : appStrings.commonUi.clinicNotConfigured,
+              ),
+            ),
             Container(
               height: 190,
               decoration: BoxDecoration(
@@ -66,6 +129,8 @@ class _DoctorSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var appStrings = context.t;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -95,24 +160,58 @@ class _DoctorSummary extends StatelessWidget {
                   children: [
                     Text(doctor.name, style: context.semiBold16TextMain),
                     Text(
-                      doctor.specialization,
+                      doctor.specialtyLabel,
                       style: context.regular11TextSub,
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: List.generate(
                         5,
-                        (_) => const Icon(
-                          Icons.star,
+                        (index) => Icon(
+                          doctor.rating >= index + 1
+                              ? Icons.star
+                              : doctor.rating > index
+                              ? Icons.star_half
+                              : Icons.star_border,
                           size: 15,
                           color: AppColors.warning,
                         ),
                       ),
                     ),
+                    Text(
+                      appStrings.commonUi.doctorRating(
+                        rating: doctor.rating.toStringAsFixed(1),
+                        count: doctor.patientStories,
+                      ),
+                      style: context.regular11TextSub,
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.favorite, color: AppColors.danger, size: 21),
+              BlocConsumer<FavoritesCubit, FavoritesState>(
+                listenWhen: (previous, current) =>
+                    current.errorMessage != null &&
+                    previous.errorMessage != current.errorMessage,
+                listener: (context, state) => ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.errorMessage!))),
+                builder: (context, state) => IconButton(
+                  onPressed:
+                      state.status != FavoritesStatus.success ||
+                          state.pendingDoctorIds.contains(doctor.id)
+                      ? null
+                      : () => context.read<FavoritesCubit>().toggleFavorite(
+                          doctor.id,
+                        ),
+                  icon: Icon(
+                    state.favoriteDoctorIds.contains(doctor.id)
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: AppColors.danger,
+                    size: 21,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -120,15 +219,22 @@ class _DoctorSummary extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: () {
-                    context.push(AppRouter.selectTimePath(doctor.id));
-                  },
-                  child: Text(t.bookNow, style: context.medium14White),
+                  onPressed: !doctor.isAvailable
+                      ? null
+                      : () {
+                          context.push(
+                            AppRouter.selectTimePath(doctor.id),
+                            extra: doctor,
+                          );
+                        },
+                  child: Text(appStrings.bookNow, style: context.medium14White),
                 ),
               ),
               const SizedBox(width: 12),
               Text(
-                '\$${doctor.price.toStringAsFixed(0)}${t.perHour}',
+                appStrings.commonUi.moneyValue(
+                  amount: '\$${doctor.price.toStringAsFixed(2)}',
+                ),
                 style: context.medium14Primary,
               ),
             ],
@@ -146,6 +252,8 @@ class _DoctorStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var appStrings = context.t;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
@@ -157,11 +265,15 @@ class _DoctorStats extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Stat(value: '${doctor.experience}', label: t.running),
+          _Stat(
+            value: doctor.rating.toStringAsFixed(1),
+            label: appStrings.doctorReviews.rating,
+          ),
           const _Divider(),
-          _Stat(value: '${doctor.patientStories}', label: t.ongoing),
-          const _Divider(),
-          _Stat(value: '${doctor.patientStories}', label: t.patients),
+          _Stat(
+            value: '${doctor.patientStories}',
+            label: appStrings.doctorReviews.count,
+          ),
         ],
       ),
     );

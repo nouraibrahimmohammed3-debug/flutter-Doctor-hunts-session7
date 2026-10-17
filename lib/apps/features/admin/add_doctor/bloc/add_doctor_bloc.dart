@@ -1,3 +1,5 @@
+import 'package:doctor_hunt/apps/core/extensions/localized_error.dart';
+import 'package:doctor_hunt/generated/strings.g.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:doctor_hunt/apps/features/shared/doctors/data/services/doctors_firestore_service.dart';
@@ -6,10 +8,9 @@ import 'add_doctor_event.dart';
 import 'add_doctor_state.dart';
 
 class AddDoctorBloc extends Bloc<AddDoctorEvent, AddDoctorState> {
-  AddDoctorBloc({
-    required DoctorsFirestoreService doctorsService,
-  })  : _doctorsService = doctorsService,
-        super(const AddDoctorState()) {
+  AddDoctorBloc({required DoctorsFirestoreService doctorsService})
+    : _doctorsService = doctorsService,
+      super(const AddDoctorState()) {
     on<AddDoctorSubmitted>(_onSubmitted);
   }
 
@@ -19,6 +20,7 @@ class AddDoctorBloc extends Bloc<AddDoctorEvent, AddDoctorState> {
     AddDoctorSubmitted event,
     Emitter<AddDoctorState> emit,
   ) async {
+    var appStrings = t;
     emit(
       state.copyWith(
         status: AddDoctorStatus.loading,
@@ -33,8 +35,7 @@ class AddDoctorBloc extends Bloc<AddDoctorEvent, AddDoctorState> {
       emit(
         state.copyWith(
           status: AddDoctorStatus.success,
-          successMessage:
-              'Doctor added successfully.',
+          successMessage: appStrings.commonUi.doctorAdded,
           clearError: true,
         ),
       );
@@ -42,7 +43,7 @@ class AddDoctorBloc extends Bloc<AddDoctorEvent, AddDoctorState> {
       emit(
         state.copyWith(
           status: AddDoctorStatus.failure,
-          errorMessage: error.toString(),
+          errorMessage: localizedError(error),
           clearSuccess: true,
         ),
       );

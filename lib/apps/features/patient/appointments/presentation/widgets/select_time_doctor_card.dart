@@ -37,7 +37,7 @@ class SelectTimeDoctorCard extends StatelessWidget {
               children: [
                 Text(doctor.name, style: context.semiBold16TextMain),
                 const SizedBox(height: 3),
-                Text(doctor.specialization, style: context.regular11TextSub),
+                Text(doctor.specialtyLabel, style: context.regular11TextSub),
                 const SizedBox(height: 6),
                 Row(
                   children: List.generate(5, (index) {
