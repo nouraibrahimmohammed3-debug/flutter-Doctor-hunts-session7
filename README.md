@@ -312,10 +312,9 @@ test/auth/auth_functions_test.dart
 flutter build apk --release
 ```
 
-لبناء Android App Bundle:
+## 🎬 Doctor Hunt App Demo
 
-```bash
-flutter build appbundle --release
-```## 🎬 App Demo
+Watch the app demonstration:
 
-[▶️ Watch Doctor Hunt Demo](./doctor_hunt_demo.mp4)
+[▶️ Watch Doctor Hunt Demo](doctor_hunt_demo.mp4)
+
