@@ -314,7 +314,11 @@ flutter build apk --release
 
 ## 🎬 Doctor Hunt App Demo
 
-Watch the app demonstration:
+## 📱 Doctor Hunt App Demo
 
-[▶️ Watch Doctor Hunt Demo](doctor_hunt_demo.mp4)
+Watch the app walkthrough below.
+
+
+https://github.com/user-attachments/assets/7f8c6498-7d8e-4ed5-9dd3-082d4195de04
+
 
